@@ -41,11 +41,13 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // Middleware
 app.use(express.json()); // Para parsear cuerpos JSON
-app.use(cors({
-  origin: ['http://localhost:3000', 'https://legaly-titulo.vercel.app'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos que deseas permitir
+const corsOptions = {
+  origin: 'https://legaly-titulo.vercel.app', // URL de producción de tu frontend
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos permitidos
+  allowedHeaders: ['Content-Type', 'Authorization'], // Encabezados permitidos
+};
 
-}));
+app.use(cors(corsOptions));
 
 
 app.use(bodyParser.json()); // Para parsear cuerpos JSON
