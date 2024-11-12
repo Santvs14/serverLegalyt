@@ -40,13 +40,22 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // Middleware
 app.use(express.json()); // Para parsear cuerpos JSON
+const allowedOrigins = [
+  'http://localhost:3000', // Para desarrollo local
+  'https://legaly-titulo-7ybyqu6te-santvs14s-projects.vercel.app' // URL de producción en Vercel
+];
 app.use(cors({
+  origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+      } else {
+          callback(new Error('Not allowed by CORS'));
+      }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos que deseas permitir
+  credentials: true // Si estás usando cookies o sesiones
+}));
 
-    origin: 'https://legaly-titulo-7ybyqu6te-santvs14s-projects.vercel.app', //      'http://localhost:3000', // Permitir solo este origen
-    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos permitidos
-    allowedHeaders: ['Content-Type', 'Authorization'], // Cabeceras permitidas
-
-  }));
 
 app.use(bodyParser.json()); // Para parsear cuerpos JSON
 app.use(express.urlencoded({ extended: true })); // Para formularios URL-encoded
