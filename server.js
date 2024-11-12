@@ -27,8 +27,9 @@ const { notifyStatusChange } = require('./controllers/notificationController'); 
 const app = express();
 // Configurar el servidor para escuchar en el puerto 5000
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
-  console.log(`Servidor escuchando en el puerto ${PORT}`);
+  console.log(`Servidor escuchando en el puerto... ${PORT}`);
 });
 
 
