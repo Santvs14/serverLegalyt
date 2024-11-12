@@ -20,6 +20,9 @@ const certificateRoutes = require('./routes/certificacionRoutes');
 const solicitudRoutes = require('./routes/solicitudRoutes');
 const { notifyStatusChange } = require('./controllers/notificationController'); // Asegúrate de que la ruta es correcta
 
+
+
+
 // Inicializar la aplicación de Express
 const app = express();
 // Configurar el servidor para escuchar en el puerto 5000
@@ -27,6 +30,8 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en el puerto ${PORT}`);
 });
+
+
 
 // Conectar a la base de datos MongoDB
 mongoose.connect(process.env.MONGODB_URI)
@@ -36,7 +41,8 @@ mongoose.connect(process.env.MONGODB_URI)
 // Middleware
 app.use(express.json()); // Para parsear cuerpos JSON
 app.use(cors({
-    origin: 'http://localhost:3000', // Permitir solo este origen
+
+    origin: 'https://legaly-titulo-7ybyqu6te-santvs14s-projects.vercel.app', //      'http://localhost:3000', // Permitir solo este origen
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos permitidos
     allowedHeaders: ['Content-Type', 'Authorization'], // Cabeceras permitidas
 
@@ -56,7 +62,7 @@ app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
 // Rutas del servidor
 app.get('/', (req, res) => {
-  res.send('¡Hola desde el servidor Express en Vercel!');
+  res.send('¡Hola desde el servidor Express en Render!');
 });
 
 // Ruta para notificación
