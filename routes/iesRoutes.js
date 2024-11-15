@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const iesController = require('../controllers/iesController');
 
-// Ruta para crear un nuevo registro IES con documentos
-router.post('/', iesController.createIES);
+// Definir la ruta para crear un nuevo registro IES
+router.post('/api/ies', iesController.createIES);
+
 
 // Ruta para obtener todos los registros IES
 router.get('/ies', iesController.getAllIES);
