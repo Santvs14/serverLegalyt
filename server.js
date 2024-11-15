@@ -20,6 +20,7 @@ const certificateRoutes = require('./routes/certificacionRoutes');
 const solicitudRoutes = require('./routes/solicitudRoutes');
 const { notifyStatusChange } = require('./controllers/notificationController'); // Asegúrate de que la ruta es correcta
 
+const iesRoutes = require('./routes/iesRoutes');
 
 
 
@@ -95,6 +96,7 @@ app.use('/certificate', certificateRoutes);
 app.use('/api/titulos', tituloRoutes);
 app.use('/api', emailRoutes); // Para las rutas de correo
 app.use('/api/solicitud', solicitudRoutes); // Ruta para solicitudes
+app.use('/api/ies', iesRoutes);
 
 // Ruta específica para notificaciones SMS
 app.post('/api/legalization/notifications', (req, res) => {
