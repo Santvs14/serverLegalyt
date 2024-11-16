@@ -1,5 +1,5 @@
-const IES = require('../models/Ies');
 const cloudinary = require('cloudinary').v2;
+const IES = require('../models/Ies');
 
 // Configuración de Cloudinary
 cloudinary.config({
@@ -8,41 +8,40 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Crear un nuevo registro en la colección IES
 const createIES = async (req, res) => {
   try {
+    // Capturar los datos del formulario
     const { nombres, apellidos, carrera, matricula } = req.body;
     console.log('Datos del body:', req.body); // Verificar si los datos del formulario están llegando
     console.log('Archivos recibidos:', req.files); // Verificar si los archivos están llegando correctamente
 
-    // Subir documentos a Cloudinary
+    // Subir los documentos a Cloudinary
     const documentos = [];
     for (const file of req.files) {
       const result = await cloudinary.uploader.upload(file.path, {
-        folder: 'IES-Documents',
+        folder: 'IES-Documentos', // Carpeta donde se guardarán los documentos
       });
-      documentos.push(result.secure_url); // URL segura del documento
+      documentos.push(result.secure_url); // Guardamos la URL segura de cada archivo
     }
 
-    // Crear el registro
+    // Crear un nuevo registro en la colección IES con los datos y las URLs de los documentos
     const nuevoIES = new IES({
       nombres,
       apellidos,
       carrera,
       matricula,
-      documentos,
+      documentos, // Aquí guardamos las URLs de los documentos
     });
 
+    // Guardar el nuevo registro
     await nuevoIES.save();
     res.status(201).json({ message: 'Registro creado exitosamente', nuevoIES });
   } catch (error) {
     console.error('Error al crear el IES:', error); // Mensaje más claro para depuración
-
     res.status(500).json({ error: 'Error al crear el registro' });
   }
 };
 
-// Exportar los controladores
 module.exports = {
   createIES,
 };
