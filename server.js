@@ -102,8 +102,11 @@ app.use('/certificate', certificateRoutes);
 app.use('/api/titulos', tituloRoutes);
 app.use('/api', emailRoutes); // Para las rutas de correo
 app.use('/api/solicitud', solicitudRoutes); // Ruta para solicitudes
-app.use('/ies', iesRoutes);
-// Manejo de errores para rutas no encontradas
+app.post('/ies', (req, res) => {
+  // Lógica para manejar la creación de IES
+  res.json({ message: 'IES creado con éxito' });
+});
+
 app.use((req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });
 });
