@@ -102,7 +102,7 @@ app.use('/certificate', certificateRoutes);
 app.use('/api/titulos', tituloRoutes);
 app.use('/api', emailRoutes); // Para las rutas de correo
 app.use('/api/solicitud', solicitudRoutes); // Ruta para solicitudes
-app.use('/api/ies', iesRoutes);  // Asegúrate de usar la ruta correcta
+app.use('/api', iesRoutes);  // Asegúrate de usar la ruta correcta
 
 
 app.use((req, res) => {

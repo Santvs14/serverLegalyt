@@ -1,66 +1,67 @@
-const cloudinary = require('cloudinary').v2;  // Asegúrate de tener Cloudinary configurado
-const IES = require('../models/Ies');  // Tu modelo de IES
-const multer = require('multer');  // Para manejar la subida de archivos
-const fs = require('fs');  // Para eliminar archivos locales si es necesario
+const cloudinary = require('cloudinary').v2;
+const IES = require('../models/IES');
+const multer = require('multer');
+const { promisify } = require('util');
 
-// Configuración de Multer (si aún no lo has hecho)
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, './uploads'); // Directorio local temporal
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
-});
-const upload = multer({ storage: storage });
+// Configurar multer para manejar la carga de archivos
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage }).array('documentos', 10); // Limitar a 10 archivos por solicitud
 
-// Función para subir archivos a Cloudinary
-const uploadToCloudinary = (filePath) => {
-  return new Promise((resolve, reject) => {
-    cloudinary.uploader.upload(filePath, (error, result) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve(result.secure_url);  // Retorna la URL de la imagen subida
+// Función para subir los documentos a Cloudinary
+const uploadToCloudinary = async (file) => {
+  try {
+    const result = await cloudinary.uploader.upload_stream(
+      { folder: 'IES - Documentos' },
+      (error, result) => {
+        if (error) {
+          throw new Error('Error al subir archivo a Cloudinary');
+        }
+        return result;
       }
-    });
+    );
+    const buffer = Buffer.from(file.buffer);
+    return await promisify(result)(buffer); // Esperar la respuesta de Cloudinary
+  } catch (error) {
+    console.error('Error subiendo documento:', error);
+    throw error;
+  }
+};
+
+// Controlador para registrar un nuevo IES
+const registrarIES = async (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ error: 'Error al cargar los documentos' });
+    }
+
+    try {
+      // Subir documentos a Cloudinary
+      const documentUrls = [];
+      for (let i = 0; i < req.files.length; i++) {
+        const result = await uploadToCloudinary(req.files[i]);
+        documentUrls.push(result.secure_url); // Almacenar la URL segura del archivo
+      }
+
+      // Crear un nuevo registro IES
+      const nuevoIES = new IES({
+        nombres: req.body.nombres,
+        apellidos: req.body.apellidos,
+        carrera: req.body.carrera,
+        matricula: req.body.matricula,
+        documentos: documentUrls,
+      });
+
+      // Guardar en la base de datos
+      await nuevoIES.save();
+
+      return res.status(201).json({
+        message: 'Registro de IES exitoso',
+        data: nuevoIES,
+      });
+    } catch (error) {
+      return res.status(500).json({ error: 'Error al registrar los datos' });
+    }
   });
 };
 
-// Función para crear un nuevo registro y subir los archivos
-const createIES = async (req, res) => {
-  try {
-    console.log('Recibiendo los datos del formulario:', req.body);
-
-    // Primero, guarda los datos en la base de datos sin los archivos
-    const { nombres, apellidos, carrera, matricula } = req.body;
-    const iesData = new IES({ nombres, apellidos, carrera, matricula });
-
-    // Guardar en la base de datos
-    const newIES = await iesData.save();
-    console.log('Registro creado con éxito en la base de datos:', newIES);
-
-    // Subir los archivos a Cloudinary
-    const uploadedFiles = [];
-    for (let i = 0; i < req.files.length; i++) {
-      const filePath = req.files[i].path;
-      const fileUrl = await uploadToCloudinary(filePath);
-      uploadedFiles.push(fileUrl);
-      fs.unlinkSync(filePath);  // Eliminar el archivo local después de subirlo a Cloudinary
-    }
-
-    // Actualizar el registro con las URLs de los archivos
-    newIES.documentos = uploadedFiles;
-    await newIES.save();
-    console.log('Archivos subidos y URLs actualizadas en la base de datos:', uploadedFiles);
-
-    // Responder al cliente
-    res.status(201).json({ message: 'Registro exitoso y archivos subidos', data: newIES });
-
-  } catch (error) {
-    console.error('Error en el proceso de registro:', error);
-    res.status(500).json({ message: 'Error al procesar la solicitud', error: error.message });
-  }
-};
-
-module.exports = { createIES, upload };  // Exportar para usar en las rutas
+module.exports = { registrarIES };

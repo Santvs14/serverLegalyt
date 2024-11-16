@@ -1,8 +1,7 @@
 const express = require('express');
-const { createIES, upload } = require('../controllers/iesController');  // Controlador
 const router = express.Router();
+const { registrarIES } = require('../controllers/iesController');
 
-// Ruta para crear IES y subir archivos
-router.post('/create', upload.array('documentos'), createIES);
+router.post('/registro-ies', registrarIES);
 
 module.exports = router;
