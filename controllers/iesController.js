@@ -38,6 +38,11 @@ const createIES = async (req, res) => {
     res.status(500).json({ error: 'Error al crear el registro' });
   }
 };
+// En tu IESController.js
+exports.createIES = (req, res) => {
+  console.log("Datos recibidos:", req.body);
+  res.status(200).send({ message: "IES creado correctamente" });
+};
 
 // Exportar los controladores
 module.exports = {
