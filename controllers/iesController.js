@@ -12,6 +12,8 @@ cloudinary.config({
 const createIES = async (req, res) => {
   try {
     const { nombres, apellidos, carrera, matricula } = req.body;
+    console.log('Datos del body:', req.body); // Verificar si los datos del formulario están llegando
+    console.log('Archivos recibidos:', req.files); // Verificar si los archivos están llegando correctamente
 
     // Subir documentos a Cloudinary
     const documentos = [];
@@ -34,14 +36,10 @@ const createIES = async (req, res) => {
     await nuevoIES.save();
     res.status(201).json({ message: 'Registro creado exitosamente', nuevoIES });
   } catch (error) {
-    console.error(error);
+    console.error('Error al crear el IES:', error); // Mensaje más claro para depuración
+
     res.status(500).json({ error: 'Error al crear el registro' });
   }
-};
-// En tu IESController.js
-exports.createIES = (req, res) => {
-  console.log("Datos recibidos:", req.body);
-  res.status(200).send({ message: "IES creado correctamente" });
 };
 
 // Exportar los controladores
