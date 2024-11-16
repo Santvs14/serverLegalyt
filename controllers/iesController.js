@@ -15,22 +15,31 @@ const uploadToCloudinary = (buffer) => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       { folder: 'IES - Documentos' },
+     
       (error, result) => {
+       
         if (error) {
-          console.error('Error subiendo archivo a Cloudinary:', error);
-          return reject(error);
+          console.error('Cloudinary upload error:', error.message);
+          return reject(new Error('Error al subir archivo a Cloudinary'));
         }
-        resolve(result.secure_url); // URL del archivo subido
+        resolve(result.secure_url);
       }
     );
-    streamifier.createReadStream(buffer).pipe(uploadStream); // Convierte el buffer en stream
+    streamifier.createReadStream(buffer).pipe(uploadStream);
   });
 };
 
 // Controlador para registrar un nuevo IES
 const registrarIES = async (req, res) => {
   try {
-    const files = req.files; // Archivos enviados en la solicitud
+    // Validar campos obligatorios
+    const { nombres, apellidos, carrera, matricula } = req.body;
+    if (!nombres || !apellidos || !carrera || !matricula) {
+      return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+    }
+
+    // Validar que se envíen archivos
+    const files = req.files;
     if (!files || files.length === 0) {
       return res.status(400).json({ error: 'No se enviaron documentos para cargar' });
     }
@@ -42,23 +51,23 @@ const registrarIES = async (req, res) => {
 
     // Crear un nuevo registro IES
     const nuevoIES = new IES({
-      nombres: req.body.nombres,
-      apellidos: req.body.apellidos,
-      carrera: req.body.carrera,
-      matricula: req.body.matricula,
+      nombres,
+      apellidos,
+      carrera,
+      matricula,
       documentos: documentUrls,
     });
 
     // Guardar en la base de datos
     await nuevoIES.save();
-
+console.log('Registro Ies exitoso.', nuevoIES)
     return res.status(201).json({
       message: 'Registro de IES exitoso',
       data: nuevoIES,
     });
   } catch (error) {
     console.error('Error al registrar IES:', error);
-    return res.status(500).json({ error: 'Error al registrar los datos' });
+    return res.status(500).json({ error: 'Error al registrar los datos', details: error.message });
   }
 };
 
