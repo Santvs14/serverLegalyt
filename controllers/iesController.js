@@ -12,8 +12,8 @@ const createIES = async (req, res) => {
   try {
     // Capturar los datos del formulario
     const { nombres, apellidos, carrera, matricula } = req.body;
-    console.log('Datos del body:', req.body); // Verificar si los datos del formulario están llegando
-    console.log('Archivos recibidos:', req.files); // Verificar si los archivos están llegando correctamente
+    console.log('Datos recibidos del formulario:', req.body); // Verificar si los datos están llegando correctamente
+    console.log('Archivos recibidos:', req.files); // Verificar si los archivos están llegando
 
     // Subir los documentos a Cloudinary
     const documentos = [];
@@ -21,10 +21,10 @@ const createIES = async (req, res) => {
       const result = await cloudinary.uploader.upload(file.path, {
         folder: 'IES-Documentos', // Carpeta donde se guardarán los documentos
       });
-      documentos.push(result.secure_url); // Guardamos la URL segura de cada archivo
+      documentos.push(result.secure_url); // Guardar la URL segura de cada archivo
     }
 
-    // Crear un nuevo registro en la colección IES con los datos y las URLs de los documentos
+    // Crear el nuevo registro
     const nuevoIES = new IES({
       nombres,
       apellidos,
@@ -36,11 +36,14 @@ const createIES = async (req, res) => {
     // Guardar el nuevo registro
     await nuevoIES.save();
     res.status(201).json({ message: 'Registro creado exitosamente', nuevoIES });
+
   } catch (error) {
-    console.error('Error al crear el IES:', error); // Mensaje más claro para depuración
-    res.status(500).json({ error: 'Error al crear el registro' });
+    // Captura errores más específicos
+    console.error('Error en la creación de IES:', error);  // Logs detallados del error
+    res.status(500).json({ error: `Error al crear el registro: ${error.message}` });
   }
 };
+
 
 module.exports = {
   createIES,
