@@ -8,6 +8,6 @@ const storage = multer.diskStorage({});
 const upload = multer({ storage });
 
 // Ruta para crear un nuevo registro de IES
-router.post('/create', upload.array('documentos'), iesController.createIES);
+router.post('/create', iesController.createIES);
 
 module.exports = router;
