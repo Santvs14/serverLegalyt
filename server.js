@@ -22,6 +22,10 @@ const { notifyStatusChange } = require('./controllers/notificationController'); 
 
 const iesRoutes = require('./routes/iesRoutes');
 
+app.use((req, res, next) => {
+  console.log(`Solicitud recibida: ${req.method} ${req.url}`);
+  next();
+});
 
 
 // Inicializar la aplicación de Express
@@ -54,6 +58,8 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json()); // Para parsear cuerpos JSON
 app.use(express.urlencoded({ extended: true })); // Para formularios URL-encoded
 app.use(bodyParser.urlencoded({ extended: true })); // Para formularios URL-encoded
+app.use(express.urlencoded({ extended: true })); // Para manejar formularios
+
 app.use(express.static('public')); // Para archivos estáticos desde la carpeta "public"
 
 // Servir imágenes estáticas
@@ -97,6 +103,10 @@ app.use('/api/titulos', tituloRoutes);
 app.use('/api', emailRoutes); // Para las rutas de correo
 app.use('/api/solicitud', solicitudRoutes); // Ruta para solicitudes
 app.use('/api/ies', iesRoutes);
+// Manejo de errores para rutas no encontradas
+app.use((req, res) => {
+  res.status(404).json({ error: 'Ruta no encontrada' });
+});
 
 
 // Ruta específica para notificaciones SMS
