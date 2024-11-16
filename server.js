@@ -96,7 +96,7 @@ app.use('/certificate', certificateRoutes);
 app.use('/api/titulos', tituloRoutes);
 app.use('/api', emailRoutes); // Para las rutas de correo
 app.use('/api/solicitud', solicitudRoutes); // Ruta para solicitudes
-app.use('/api', iesRoutes);
+app.use('/api/ies', iesRoutes);
 
 
 // Ruta específica para notificaciones SMS

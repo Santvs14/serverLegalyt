@@ -1,12 +1,13 @@
-// En tu archivo de rutas
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const iesController = require('../controllers/iesController');
 
-// Ruta para crear un nuevo registro IES con archivos
-router.post('/api/ies', iesController.uploadDocuments, iesController.createIES);
+// Configuración de Multer para manejar archivos en el backend
+const storage = multer.diskStorage({});
+const upload = multer({ storage });
 
-// Ruta para agregar documentos a un registro IES existente
-router.put('/api/ies/:id/documento', iesController.uploadDocuments, iesController.addDocument);
+// Ruta para crear un nuevo registro de IES
+router.post('/create', upload.array('documentos'), iesController.createIES);
 
 module.exports = router;
