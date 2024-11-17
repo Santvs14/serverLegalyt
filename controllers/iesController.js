@@ -1,38 +1,69 @@
+// controllers/IESController.js
+const IES = require('../models/Ies');
 const multer = require('multer');
-const storage = multer.memoryStorage(); // Almacenamiento en memoria para buffers
-const upload = multer({ storage });
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
+const dotenv = require('dotenv');
 
-const registrarIES = async (req, res) => {
-  console.log('Body:', req.body);
-  console.log('Files:', req.files);
+// Cargar variables de entorno
+dotenv.config();
 
-  try {
-    const { nombres, apellidos, carrera, matricula } = req.body;
+// Configuración de Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ error: 'No se enviaron documentos.' });
+// Configuración de Multer y Cloudinary Storage
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'documentos IES',
+    allowed_formats: ['jpg', 'jpeg', 'png'],
+    transformation: [{ width: 500, height: 500, crop: 'limit' }],
+  },
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB por archivo
+});
+
+// Subir documentos y crear un nuevo registro
+const createIESRecord = async (req, res) => {
+  upload.array('documentos', 10)(req, res, async (err) => {
+    if (err instanceof multer.MulterError) {
+      // Errores de Multer
+      return res.status(400).json({ error: err.message });
+    } else if (err) {
+      // Otros errores
+      return res.status(400).json({ error: err.message });
     }
 
-    const documentUrls = req.files.map((file) => file.originalname); // Simulando URLs
+    try {
+      const { nombres, apellidos, carrera, matricula } = req.body;
 
-    const nuevoIES = new IES({
-      nombres,
-      apellidos,
-      carrera,
-      matricula,
-      documentos: documentUrls,
-    });
+      // Verificar campos requeridos
+      if (!nombres || !apellidos || !carrera || !matricula) {
+        return res.status(400).json({ error: 'Todos los campos son requeridos' });
+      }
 
-    await nuevoIES.save();
+      // Obtener URLs de los documentos subidos
+      const documentos = req.files.map((file) => file.path); // `file.path` contiene la URL de Cloudinary
 
-    return res.status(201).json({
-      message: 'Registro de IES exitoso',
-      data: nuevoIES,
-    });
-  } catch (error) {
-    console.error('Error al registrar IES:', error);
-    return res.status(500).json({ error: 'Error interno del servidor.' });
-  }
+      const newRecord = new IES({ nombres, apellidos, carrera, matricula, documentos });
+      const savedRecord = await newRecord.save();
+
+      res.status(201).json(savedRecord);
+    } catch (error) {
+      // Manejo de errores de MongoDB (por ejemplo, duplicados)
+      if (error.code === 11000) {
+        return res.status(400).json({ error: 'La matrícula ya existe' });
+      }
+      res.status(500).json({ error: 'Error al guardar el registro', details: error.message });
+    }
+  });
 };
 
-module.exports = { registrarIES, upload };
+module.exports = { createIESRecord };
