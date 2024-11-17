@@ -9,6 +9,7 @@ const UserSchema = new mongoose.Schema({
     cedula: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     carrera: { type: String, required: true },
+    Matricula: { type: String, required: true },
     universidad: { type: String, required: true },
     contraseña: { type: String, required: true },
     telefono: { type: String, required: true } // Agregando el campo para el número de teléfono

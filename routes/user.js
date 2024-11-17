@@ -10,7 +10,7 @@ const router = express.Router();
 // Ruta para registrar usuario
 
 router.post('/register', async (req, res) => {
-    const { nombre, apellido, cedula, email, carrera, universidad, contraseña,telefono } = req.body;
+    const { nombre, apellido, cedula, email, carrera, matricula, universidad, contraseña,telefono } = req.body;
 
       
 
@@ -32,6 +32,7 @@ router.post('/register', async (req, res) => {
             cedula,
             email,
             carrera,
+            matricula,
             universidad,
             contraseña: hashedPassword,
             telefono,
