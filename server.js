@@ -70,6 +70,16 @@ app.get('/', (req, res) => {
   res.send('¡Hola desde el servidor Express en Render!');
 });
 
+// Ruta para verificar el estado del servicio
+app.get('/status', (req, res) => {
+  res.status(200).json({ 
+    status: 'active', 
+    message: 'El servicio está activo y funcionando correctamente.' 
+  });
+});
+
+
+
 // Ruta para notificación
 app.post('/notify', async (req, res) => {
   const { email, estado } = req.body;
