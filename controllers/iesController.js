@@ -50,7 +50,7 @@ const createIESRecord = async (req, res) => {
       }
 
       // Obtener URLs de los documentos subidos
-      const documentos = req.files.map((file) => file.path); // `file.path` contiene la URL de Cloudinary
+      const documentos = req.files ? req.files.map((file) => file.path) : [];
 
       const newRecord = new IES({ nombres, apellidos, carrera, matricula, universidad, documentos });
       const savedRecord = await newRecord.save();
