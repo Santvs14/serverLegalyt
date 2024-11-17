@@ -42,17 +42,17 @@ const createIESRecord = async (req, res) => {
     }
 
     try {
-      const { nombres, apellidos, carrera, matricula } = req.body;
+      const { nombres, apellidos, carrera, matricula, universidad } = req.body;
 
       // Verificar campos requeridos
-      if (!nombres || !apellidos || !carrera || !matricula) {
+      if (!nombres || !apellidos || !carrera || !matricula || !universidad) {
         return res.status(400).json({ error: 'Todos los campos son requeridos' });
       }
 
       // Obtener URLs de los documentos subidos
       const documentos = req.files.map((file) => file.path); // `file.path` contiene la URL de Cloudinary
 
-      const newRecord = new IES({ nombres, apellidos, carrera, matricula, documentos });
+      const newRecord = new IES({ nombres, apellidos, carrera, matricula, universidad, documentos });
       const savedRecord = await newRecord.save();
 
       res.status(201).json(savedRecord);

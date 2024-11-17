@@ -22,6 +22,11 @@ const IESSchema = new mongoose.Schema({
     unique: true,
     trim: true,
   },
+  universidad: {
+    type: String,
+    required: true,
+    trim: true, // Opcional, pero se recomienda para eliminar espacios extra
+  },
   documentos: [
     {
       type: String, // Almacena URLs de los documentos subidos
