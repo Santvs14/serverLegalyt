@@ -2,6 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const { createIESRecord } = require('../controllers/iesController');
+const IES = require('../models/Ies'); // Importa el modelo IES
+
 
 // Ruta para crear un registro de IES con documentos
 router.post('/ies', createIESRecord);
