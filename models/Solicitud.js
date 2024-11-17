@@ -8,6 +8,7 @@ const SolicitudSchema = new mongoose.Schema({
     cedula: String,
     email: String,
     universidad: String,
+    matricula: String,
     carrera: String,
     telefono: {
         type: String,
