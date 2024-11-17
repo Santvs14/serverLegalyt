@@ -3,6 +3,9 @@ const storage = multer.memoryStorage(); // Almacenamiento en memoria para buffer
 const upload = multer({ storage });
 
 const registrarIES = async (req, res) => {
+  console.log('Body:', req.body);
+  console.log('Files:', req.files);
+
   try {
     const { nombres, apellidos, carrera, matricula } = req.body;
 
