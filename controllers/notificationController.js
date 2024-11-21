@@ -81,7 +81,7 @@ const notifyStatusChange = async (email, estado, _id) => {
         message = 'Su solicitud ha sido rechazada, </br> para saber los motivos visite nuestras oficinas o contacte vía teléfono: (809) 731 1100  | Fax: 809-731-1101 | Horario:De 8:00 a.m. a 4:00 p.m. de Lunes a Viernes.';
         break;
       default:
-        message = 'Lamentamos informarle que su solicitud ha sido rechazada.';
+        message = 'Su solicitud ha sido rechazada, </br> para saber los motivos visite nuestras oficinas o contacte vía teléfono: (809) 731 1100  | Fax: 809-731-1101 | Horario:De 8:00 a.m. a 4:00 p.m. de Lunes a Viernes.';
     }
   }
 
