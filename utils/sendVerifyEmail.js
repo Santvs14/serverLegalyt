@@ -13,7 +13,7 @@ const generateVerificationCode = () => {
     const code = Math.floor(100000 + Math.random() * 900000).toString().padStart(6, '0');
 
     const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 3); // Expira en 3 minuto
+    expiresAt.setMinutes(expiresAt.getMinutes() + 1); // Expira en 1 minuto
     return { code, expiresAt };
 };
 

@@ -33,36 +33,35 @@ const verifyUser = async (req, res) => {
     }
 
     try {
-        console.log({ code, expiresAt }); // Al enviar
+        console.log('Datos recibidos en verifyUser:', req.body);
 
-        // Buscar el código de verificación en la base de datos
-        const verificationRecord = await Verification.findOne({ email, verificationCode });
-        console.log(verificationRecord); // Al verificar
-
+        const verificationRecord = await Verification.findOne({
+            email: email.trim().toLowerCase(),
+            verificationCode: verificationCode.trim(),
+        });
 
         if (!verificationRecord) {
-            return res.status(400).json({ message: 'Código de verificación incorrecto' });
+            return res.status(400).json({ message: 'Código incorrecto o no encontrado' });
         }
 
-        // Verificar si el código ha expirado
-        if (verificationRecord.expiresAt < new Date()) {
+        if (new Date(verificationRecord.expiresAt) < new Date()) {
             return res.status(400).json({ message: 'El código ha expirado' });
         }
 
-        // Marcar al usuario como verificado (si existe)
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: email.trim().toLowerCase() });
         if (user) {
-            user.isVerified = true;  // Suponiendo que tienes un campo 'isVerified' en tu modelo de usuario
+            user.isVerified = true;
             await user.save();
         }
 
-        // Eliminar el código de verificación de la base de datos
         await Verification.deleteOne({ _id: verificationRecord._id });
 
-        res.status(200).json({ message: 'Código de verificación exitoso. Usuario verificado.' });
+        res.status(200).json({ message: 'Usuario verificado con éxito' });
     } catch (error) {
-        res.status(500).json({ message: 'Error al verificar el código', error });
+        console.error('Error en verifyUser:', error);
+        res.status(500).json({ message: 'Error interno del servidor', error: error.message });
     }
 };
+
 
 module.exports = { sendCode, verifyUser };
