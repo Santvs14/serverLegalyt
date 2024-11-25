@@ -3,28 +3,24 @@ const User = require('../models/User');  // Modelo de usuario
 const Verification = require('../models/Verification');  // Modelo para almacenar códigos de verificación
 const sendVerificationEmail = require('../utils/sendVerifyEmail');  // Ruta del archivo de verificación (actualízalo si es necesario)
 
-// Función para registrar un nuevo usuario
-const registerUser = async (req, res) => {
-    const { email, password, name } = req.body;
+// Función para enviar el código de verificación al correo electrónico
+const sendCode = async (req, res) => {
+    const { email } = req.body;
 
-    if (!email || !password || !name) {
-        return res.status(400).json({ message: 'Faltan campos obligatorios' });
+    if (!email) {
+        return res.status(400).json({ message: 'Correo electrónico es obligatorio' });
     }
 
     try {
-        // Crear un nuevo usuario en la base de datos
-        const newUser = new User({ email, password, name });
-        await newUser.save();
-
-        // Generar y enviar el código de verificación
+        // Generar el código de verificación
         const { code, expiresAt } = sendVerificationEmail(email);  // Aquí generas el código y lo envías
 
         // Guarda el código de verificación en la base de datos
         await Verification.create({ email, verificationCode: code, expiresAt });
 
-        res.status(200).json({ message: 'Usuario registrado con éxito. Verifica tu correo electrónico.' });
+        res.status(200).json({ message: 'Código de verificación enviado a tu correo.' });
     } catch (error) {
-        res.status(500).json({ message: 'Error al registrar el usuario', error });
+        res.status(500).json({ message: 'Error al enviar el código', error });
     }
 };
 
@@ -49,10 +45,12 @@ const verifyUser = async (req, res) => {
             return res.status(400).json({ message: 'El código ha expirado' });
         }
 
-        // Marcar al usuario como verificado
+        // Marcar al usuario como verificado (si existe)
         const user = await User.findOne({ email });
-        user.isVerified = true;  // Suponiendo que tienes un campo 'isVerified' en tu modelo de usuario
-        await user.save();
+        if (user) {
+            user.isVerified = true;  // Suponiendo que tienes un campo 'isVerified' en tu modelo de usuario
+            await user.save();
+        }
 
         // Eliminar el código de verificación de la base de datos
         await Verification.deleteOne({ _id: verificationRecord._id });
@@ -63,4 +61,4 @@ const verifyUser = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, verifyUser };
+module.exports = { sendCode, verifyUser };

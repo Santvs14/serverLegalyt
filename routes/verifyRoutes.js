@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, verifyUser } = require('../controllers/userController');
+const { sendCode, verifyUser } = require('../controllers/userController');
 
-// Ruta para registrar al usuario
-router.post('/register', registerUser);
+// Ruta para enviar el código de verificación (email en este caso)
+router.post('/send-code', sendCode);
 
-// Ruta para verificar el código de verificación
-router.post('/verify', verifyUser);
+// Ruta para verificar el código
+router.post('/verify-code', verifyUser);
 
 module.exports = router;
