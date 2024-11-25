@@ -17,6 +17,16 @@ router.post('/send-code', async (req, res) => {
 });
 
 // Ruta para verificar el código
-router.post('/verify-code', verifyUser);
+router.post('/verify-code', async (req, res) => {
+    try {
+        console.log('Datos recibidos para verificar código:', req.body); // Agregar log de depuración
+
+        // Llamar a la función de verificación
+        await verifyUser(req, res);
+    } catch (error) {
+        console.error('Error al verificar código:', error); // Manejar errores inesperados
+        res.status(500).json({ message: 'Error al verificar el código' });
+    }
+});
 
 module.exports = router;

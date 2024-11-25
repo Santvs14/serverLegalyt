@@ -41,27 +41,34 @@ const verifyUser = async (req, res) => {
         });
 
         if (!verificationRecord) {
+            console.log('Código de verificación no encontrado en la base de datos.');
             return res.status(400).json({ message: 'Código incorrecto o no encontrado' });
         }
 
         if (new Date(verificationRecord.expiresAt) < new Date()) {
+            console.log('Código expirado. Expira en:', verificationRecord.expiresAt);
             return res.status(400).json({ message: 'El código ha expirado' });
         }
 
+        // Marcar al usuario como verificado
         const user = await User.findOne({ email: email.trim().toLowerCase() });
         if (user) {
             user.isVerified = true;
             await user.save();
+            console.log('Usuario marcado como verificado:', user);
         }
 
+        // Eliminar el registro de verificación
         await Verification.deleteOne({ _id: verificationRecord._id });
+        console.log('Registro de verificación eliminado.');
 
         res.status(200).json({ message: 'Usuario verificado con éxito' });
     } catch (error) {
-        console.error('Error en verifyUser:', error);
+        console.error('Error al verificar el usuario:', error);
         res.status(500).json({ message: 'Error interno del servidor', error: error.message });
     }
 };
+
 
 
 module.exports = { sendCode, verifyUser };
