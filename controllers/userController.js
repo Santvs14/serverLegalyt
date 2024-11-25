@@ -1,5 +1,5 @@
 const express = require('express');
-const User = require('../models/User');  // Modelo de usuario
+
 const Verification = require('../models/Verification');  // Modelo para almacenar códigos de verificación
 const sendVerificationEmail = require('../utils/sendVerifyEmail');  // Ruta del archivo de verificación (actualízalo si es necesario)
 
@@ -12,19 +12,26 @@ const sendCode = async (req, res) => {
     }
 
     try {
-        // Generar el código de verificación
+        // Generar código y fecha de expiración
         const { code, expiresAt } = sendVerificationEmail(email);
 
-        // Guarda el código de verificación en la base de datos
-        const verificationRecord = await Verification.create({ email, verificationCode: code, expiresAt });
-        console.log('Código de verificación guardado en la base de datos:', verificationRecord);
+        console.log('Intentando guardar código de verificación:', { email, verificationCode: code, expiresAt });
 
+        // Guarda el código en la base de datos
+        const verificationRecord = await Verification.create({
+            email: email.trim().toLowerCase(),
+            verificationCode: code.trim(),
+            expiresAt,
+        });
+
+        console.log('Código de verificación guardado:', verificationRecord);
         res.status(200).json({ message: 'Código de verificación enviado a tu correo.' });
     } catch (error) {
         console.error('Error al enviar el código:', error);
         res.status(500).json({ message: 'Error al enviar el código', error });
     }
 };
+
 
 
 // Función para verificar el código de verificación del usuario
@@ -45,7 +52,7 @@ const verifyUser = async (req, res) => {
         });
 
         if (!verificationRecord) {
-            console.error('Código de verificación no encontrado:', { email, verificationCode });
+            console.error('Código de verificación no encontrado en la base de datos:', { email, verificationCode });
             return res.status(400).json({ message: 'Código incorrecto o no encontrado' });
         }
 
