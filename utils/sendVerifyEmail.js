@@ -21,7 +21,12 @@ const sendVerificationEmail = async (email) => {
     const { code, expiresAt } = generateVerificationCode();
 
     try {
-        // Envía el correo electrónico con el código de verificación
+        // Verifica que la clave de API esté configurada correctamente
+        if (!process.env.SENDINBLUE_API_KEY) {
+            throw new Error('La clave de API de Sendinblue no está configurada.');
+        }
+
+        // Prepara los datos del correo
         const emailData = {
             sender: { email: 'santiagovs1402@gmail.com' },  // Reemplaza con tu email de envío
             to: [{ email: email }],
@@ -29,13 +34,22 @@ const sendVerificationEmail = async (email) => {
             htmlContent: `<h3>Tu código de verificación es: ${code}</h3><p>Este código expirará en ${expiresAt.toLocaleTimeString()}</p>`
         };
 
-        // Enviar el correo
+        // Envía el correo electrónico
         await client.sendTransacEmail(emailData); // Usamos el cliente correctamente aquí
 
+        // Retorna el código y la fecha de expiración
         return { code, expiresAt };
     } catch (error) {
-        console.error('Error al enviar el código de verificación:', error.response.body);
-        throw new Error('Error al enviar el código de verificación');
+        // Manejo de errores con mayor detalle
+        if (error.response) {
+            // Si el error es generado por una respuesta de la API
+            console.error('Error al enviar el código de verificación:', error.response.body);
+            throw new Error(error.response.body.message || 'Error desconocido');
+        } else {
+            // Error de red o del servidor
+            console.error('Error de conexión o configuración:', error);
+            throw new Error('Error de conexión con el servidor de Sendinblue');
+        }
     }
 };
 
