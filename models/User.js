@@ -12,7 +12,9 @@ const UserSchema = new mongoose.Schema({
     matricula: { type: String, required: true },
     universidad: { type: String, required: true },
     contraseña: { type: String, required: true },
-    telefono: { type: String, required: true } // Agregando el campo para el número de teléfono
+    telefono: { type: String, required: true }, // Agregando el campo para el número de teléfono
+    isVerified: { type: Boolean, default: false }  // Asegúrate de tener este campo
+
 
 }, { timestamps: true });
 UserSchema.pre('save', function (next) {
