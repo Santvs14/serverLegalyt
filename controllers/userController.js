@@ -2,12 +2,16 @@
 
 const { generateVerificationCode } = require('../utils/verificationCode');
 const verificationCache = new Map(); // Para almacenar temporalmente los códigos
+const { sendVerifyCode } = require('../utils/twilioServic');
 
 // Enviar código de verificación
 exports.sendVerificationCode = async (req, res) => {
-    const { phoneNumber } = req.body;
+    const { phoneNumber, verificationCode } = req.body;
 
-    if (!phoneNumber) {
+    const result = await sendVerifyCode(phoneNumber, verificationCode);
+
+    if (result.success) {
+
         return res.status(400).json({ message: "Número de teléfono es requerido" });
     }
 
