@@ -33,8 +33,12 @@ const verifyUser = async (req, res) => {
     }
 
     try {
+        console.log({ code, expiresAt }); // Al enviar
+
         // Buscar el código de verificación en la base de datos
         const verificationRecord = await Verification.findOne({ email, verificationCode });
+        console.log(verificationRecord); // Al verificar
+
 
         if (!verificationRecord) {
             return res.status(400).json({ message: 'Código de verificación incorrecto' });
