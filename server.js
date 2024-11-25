@@ -20,7 +20,7 @@ const certificateRoutes = require('./routes/certificacionRoutes');
 const solicitudRoutes = require('./routes/solicitudRoutes');
 const { notifyStatusChange } = require('./controllers/notificationController'); // Asegúrate de que la ruta es correcta
 const iesRoutes = require('./routes/iesRoutes');
-const { verifyCode, sendCode } = require('./controllers/userController'); // Ruta al controlador
+const { verifyCode, sendVerificationCode } = require('./controllers/userController'); // Ruta al controlador
 
 
 
@@ -112,7 +112,7 @@ app.use('/api/solicitud', solicitudRoutes); // Ruta para solicitudes
 app.use('/api', iesRoutes);  // Asegúrate de usar la ruta correcta
 app.use('/api/ies', iesRoutes);//Mostrar registro Ies
 
-app.post('/send-code', sendCode);
+app.post('/send-code', sendVerificationCode);
 app.post('/verify-code', verifyCode);
 
 app.use((req, res) => {
