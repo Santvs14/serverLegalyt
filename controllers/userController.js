@@ -1,68 +1,66 @@
-// userController.js
+const express = require('express');
+const User = require('../models/User');  // Modelo de usuario
+const Verification = require('../models/Verification');  // Modelo para almacenar códigos de verificación
+const sendVerificationEmail = require('../utils/sendVerifyEmail');  // Ruta del archivo de verificación (actualízalo si es necesario)
 
-const { generateVerificationCode } = require('../utils/verificationCode');
-const verificationCache = new Map(); // Para almacenar temporalmente los códigos
-const { sendVerifyCode } = require('../utils/twilioServic');
+// Función para registrar un nuevo usuario
+const registerUser = async (req, res) => {
+    const { email, password, name } = req.body;
 
-// Enviar código de verificación
-exports.sendVerificationCode = async (req, res) => {
-    const { phoneNumber, verificationCode } = req.body;
-
-    const result = await sendVerifyCode(phoneNumber, verificationCode);
-
-    if (result.success) {
-
-        return res.status(400).json({ message: "Número de teléfono es requerido" });
+    if (!email || !password || !name) {
+        return res.status(400).json({ message: 'Faltan campos obligatorios' });
     }
 
     try {
-        const { code, expiresAt } = generateVerificationCode();
+        // Crear un nuevo usuario en la base de datos
+        const newUser = new User({ email, password, name });
+        await newUser.save();
 
-        // Almacenar el código asociado al número en un almacenamiento temporal (como Redis o una base de datos)
-        verificationCache.set(phoneNumber, { code, expiresAt });
+        // Generar y enviar el código de verificación
+        const { code, expiresAt } = sendVerificationEmail(email);  // Aquí generas el código y lo envías
 
-        // Aquí llamas al servicio de Twilio o similar para enviar el código
-        // await twilioService.sendCode(phoneNumber, code);
+        // Guarda el código de verificación en la base de datos
+        await Verification.create({ email, verificationCode: code, expiresAt });
 
-        res.status(200).json({ message: "Código enviado", expiresAt });
+        res.status(200).json({ message: 'Usuario registrado con éxito. Verifica tu correo electrónico.' });
     } catch (error) {
-        console.error("Error enviando código:", error);
-        res.status(500).json({ message: "Error al enviar el código de verificación" });
+        res.status(500).json({ message: 'Error al registrar el usuario', error });
     }
 };
 
-// Verificar el código de verificación
-exports.verifyCode = async (req, res) => {
-    const { phoneNumber, code } = req.body;
+// Función para verificar el código de verificación del usuario
+const verifyUser = async (req, res) => {
+    const { email, verificationCode } = req.body;
 
-    if (!phoneNumber || !code) {
-        return res.status(400).json({ message: "Teléfono y código son requeridos" });
+    if (!email || !verificationCode) {
+        return res.status(400).json({ message: 'Correo electrónico y código requeridos' });
     }
 
     try {
-        const verificationData = verificationCache.get(phoneNumber);
+        // Buscar el código de verificación en la base de datos
+        const verificationRecord = await Verification.findOne({ email, verificationCode });
 
-        if (!verificationData) {
-            return res.status(400).json({ message: "Código no encontrado o expirado" });
+        if (!verificationRecord) {
+            return res.status(400).json({ message: 'Código de verificación incorrecto' });
         }
 
-        const { code: storedCode, expiresAt } = verificationData;
-
-        if (Date.now() > new Date(expiresAt)) {
-            verificationCache.delete(phoneNumber); // Limpia el código expirado
-            return res.status(400).json({ message: "El código ha expirado" });
+        // Verificar si el código ha expirado
+        if (verificationRecord.expiresAt < new Date()) {
+            return res.status(400).json({ message: 'El código ha expirado' });
         }
 
-        if (storedCode !== code) {
-            return res.status(400).json({ message: "El código es incorrecto" });
-        }
+        // Marcar al usuario como verificado
+        const user = await User.findOne({ email });
+        user.isVerified = true;  // Suponiendo que tienes un campo 'isVerified' en tu modelo de usuario
+        await user.save();
 
-        // Código válido, puedes marcarlo como verificado
-        verificationCache.delete(phoneNumber); // Limpia el código después de su uso
+        // Eliminar el código de verificación de la base de datos
+        await Verification.deleteOne({ _id: verificationRecord._id });
 
-        res.status(200).json({ message: "Código verificado correctamente" });
+        res.status(200).json({ message: 'Código de verificación exitoso. Usuario verificado.' });
     } catch (error) {
-        console.error("Error verificando código:", error);
-        res.status(500).json({ message: "Error al verificar el código" });
+        res.status(500).json({ message: 'Error al verificar el código', error });
     }
 };
+
+module.exports = { registerUser, verifyUser };

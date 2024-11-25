@@ -20,8 +20,8 @@ const certificateRoutes = require('./routes/certificacionRoutes');
 const solicitudRoutes = require('./routes/solicitudRoutes');
 const { notifyStatusChange } = require('./controllers/notificationController'); // Asegúrate de que la ruta es correcta
 const iesRoutes = require('./routes/iesRoutes');
-const { verifyCode, sendVerificationCode } = require('./controllers/userController'); // Ruta al controlador
 
+const virifyRoutes = require('./routes/verifyRoutes');
 
 
 
@@ -111,9 +111,10 @@ app.use('/api', emailRoutes); // Para las rutas de correo
 app.use('/api/solicitud', solicitudRoutes); // Ruta para solicitudes
 app.use('/api', iesRoutes);  // Asegúrate de usar la ruta correcta
 app.use('/api/ies', iesRoutes);//Mostrar registro Ies
+app.use('/', virifyRoutes);//Mostrar registro Ies
 
-app.post('/send-code', sendVerificationCode);
-app.post('/verify-code', verifyCode);
+
+
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });
