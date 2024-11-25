@@ -1,12 +1,10 @@
 const express = require('express');
-const router = express.Router();
+const router = express.Router();  // Usamos router aquí, no app
 const { sendCode, verifyUser } = require('../controllers/userController');
 const sendVerificationEmail = require('../utils/sendVerifyEmail');  // Importa la función
 
-
 // Ruta para enviar el código de verificación (email en este caso)
-// En el backend
-app.post('/send-code', async (req, res) => {
+router.post('/send-code', async (req, res) => {
     try {
         const { email } = req.body;
         const result = await sendVerificationEmail(email);
@@ -17,7 +15,6 @@ app.post('/send-code', async (req, res) => {
         res.status(500).json({ message: 'Error al enviar el código' });
     }
 });
-
 
 // Ruta para verificar el código
 router.post('/verify-code', verifyUser);
