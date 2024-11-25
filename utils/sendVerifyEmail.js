@@ -3,10 +3,10 @@ const defaultClient = SibApiV3Sdk.ApiClient.instance;
 
 // Configura el cliente de Sendinblue con tu clave API
 const apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = process.env.SENDINBLUE_API_KEY; // Asegúrate de tener tu clave de API en tus variables de entorno
+apiKey.apiKey = process.env.SENDINBLUE_API_KEY;  // Asegúrate de tener tu clave de API en tus variables de entorno
+console.log('Clave de API verify:', process.env.SENDINBLUE_API_KEY);
 
-const client = SibApiV3Sdk.ApiClient.instance;
-client.authentications['api-key'].apiKey = apiKey;
+const client = new SibApiV3Sdk.TransactionalEmailsApi(); // Aquí solo instanciamos una vez el cliente
 
 // Función para generar un código de verificación
 const generateVerificationCode = () => {
@@ -29,11 +29,12 @@ const sendVerificationEmail = async (email) => {
             htmlContent: `<h3>Tu código de verificación es: ${code}</h3><p>Este código expirará en ${expiresAt.toLocaleTimeString()}</p>`
         };
 
-        const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-        await apiInstance.sendTransacEmail(emailData);
+        // Enviar el correo
+        await client.sendTransacEmail(emailData); // Usamos el cliente correctamente aquí
 
         return { code, expiresAt };
     } catch (error) {
+        console.error('Error al enviar el código de verificación:', error.response.body);
         throw new Error('Error al enviar el código de verificación');
     }
 };
