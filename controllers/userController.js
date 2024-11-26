@@ -1,7 +1,6 @@
 const express = require('express');
-
-const Verification = require('../models/Verification');  // Modelo para almacenar códigos de verificación
-const sendVerificationEmail = require('../utils/sendVerifyEmail');  // Ruta del archivo de verificación (actualízalo si es necesario)
+const Verification = require('../models/Verification'); // Modelo para almacenar códigos de verificación
+const sendVerificationEmail = require('../utils/sendVerifyEmail'); // Ruta del archivo de verificación
 
 // Función para enviar el código de verificación al correo electrónico
 const sendCode = async (req, res) => {
@@ -12,14 +11,14 @@ const sendCode = async (req, res) => {
     }
 
     try {
-        // Generar código y fecha de expiración de manera correcta
-        const { code, expiresAt } = await sendVerificationEmail(email);  // Usa `await` aquí para esperar la resolución
+        // Generar código y fecha de expiración
+        const { code, expiresAt } = await sendVerificationEmail(email);
 
         console.log('Intentando guardar código de verificación:', { email, verificationCode: code, expiresAt });
 
         // Guarda el código en la base de datos
         const verificationRecord = await Verification.create({
-            email: email,
+            email: email.trim().toLowerCase(),
             verificationCode: code,
             expiresAt,
         });
@@ -32,11 +31,9 @@ const sendCode = async (req, res) => {
     }
 };
 
-
-
 // Función para verificar el código de verificación del usuario
 const verifyUser = async (req, res) => {
-    const { email, verificationCode,expiresAt } = req.body;
+    const { email, verificationCode } = req.body;
 
     if (!email || !verificationCode) {
         return res.status(400).json({ message: 'Correo electrónico y código requeridos' });
@@ -45,23 +42,23 @@ const verifyUser = async (req, res) => {
     try {
         const trimmedEmail = email.trim().toLowerCase();
         const trimmedCode = verificationCode.trim();
-        const trimmedexp =  expiresAt
-        console.log('Buscando el registro en la base de datos:', { email: trimmedEmail, code: trimmedCode, expiresAt: trimmedexp });
+
+        console.log('Buscando el registro en la base de datos:', { email: trimmedEmail, code: trimmedCode });
 
         // Buscar el registro en la base de datos
         const verificationRecord = await Verification.findOne({
             email: trimmedEmail,
             verificationCode: trimmedCode,
-            expiresAt: trimmedexp
         });
 
         if (!verificationRecord) {
-            console.error(`Código o email no encontrado: ${trimmedEmail}, ${trimmedCode},${trimmedexp}`);
+            console.error(`Código o email no encontrado: ${trimmedEmail}, ${trimmedCode}`);
             return res.status(400).json({ message: 'Código incorrecto o no encontrado' });
         }
-                // Mostrar mensaje si se encuentra el registro
-                console.log('Registro encontrado:', verificationRecord);
-                
+
+        // Mostrar mensaje si se encuentra el registro
+        console.log('Registro encontrado:', verificationRecord);
+
         // Verificar si el código ha expirado
         const currentTime = Date.now();
         if (currentTime > new Date(verificationRecord.expiresAt).getTime()) {
@@ -76,6 +73,5 @@ const verifyUser = async (req, res) => {
         res.status(500).json({ message: 'Error interno del servidor', error });
     }
 };
-
 
 module.exports = { sendCode, verifyUser };
