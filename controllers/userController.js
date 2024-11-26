@@ -54,19 +54,18 @@ const verifyUser = async (req, res) => {
         });
 
         if (!verificationRecord) {
+            console.error(`Código o email no encontrado: ${email}, ${verificationCode}`);
             return res.status(400).json({ message: 'Código incorrecto o no encontrado' });
         }
-
-        // Verificar si el código ha expirado
+        
         const currentTime = Date.now();
         if (currentTime > new Date(verificationRecord.expiresAt).getTime()) {
+            console.error('El código ha expirado:', verificationRecord);
             return res.status(400).json({ message: 'El código ha expirado' });
         }
+        
 
-        // Eliminar el registro de la base de datos tras la verificación exitosa
-        await Verification.deleteOne({ email: trimmedEmail });
-
-        res.status(200).json({ message: 'Usuario verificado con éxito' });
+        
     } catch (error) {
         console.error('Error al verificar código:', error);
         res.status(500).json({ message: 'Error interno del servidor', error });
