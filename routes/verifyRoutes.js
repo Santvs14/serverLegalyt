@@ -18,7 +18,7 @@ router.post('/send-code', async (req, res) => {
 
 router.post('/verify-code', async (req, res) => {
     try {
-        console.log('Datos recibidos para verificar código:', req.body); // Log para depurar datos recibidos
+        console.log('Datos recibidos para verificar código:', req.body);
 
         const { email, verificationCode } = req.body;
 
@@ -28,25 +28,30 @@ router.post('/verify-code', async (req, res) => {
             return res.status(400).json({ message: 'Correo electrónico y código son obligatorios' });
         }
 
+        // Sanitizar datos
+        const sanitizedEmail = email.trim().toLowerCase();
+        const sanitizedCode = verificationCode.trim();
+
         // Validar formato de email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email.trim())) {
-            console.error('Formato de correo electrónico no válido:', email);
+        if (!emailRegex.test(sanitizedEmail)) {
+            console.error('Formato de correo electrónico no válido:', sanitizedEmail);
             return res.status(400).json({ message: 'Formato de correo electrónico no válido' });
         }
 
         // Validar que el código sea un número de 6 dígitos
-        if (!/^\d{6}$/.test(verificationCode.trim())) {
-            console.error('Formato de código no válido:', verificationCode);
+        if (!/^\d{6}$/.test(sanitizedCode)) {
+            console.error('Formato de código no válido:', sanitizedCode);
             return res.status(400).json({ message: 'Formato de código no válido' });
         }
 
         // Llamar a la función de verificación
-        await verifyUser(req, res);
+        await verifyUser({ body: { email: sanitizedEmail, verificationCode: sanitizedCode } }, res);
     } catch (error) {
-        console.error('Error al verificar código:', error); // Manejar errores inesperados
+        console.error('Error al verificar código:', error);
         res.status(500).json({ message: 'Error al verificar el código' });
     }
 });
+
 
 module.exports = router;

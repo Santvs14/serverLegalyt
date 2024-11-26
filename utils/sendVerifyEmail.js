@@ -11,11 +11,10 @@ const client = new SibApiV3Sdk.TransactionalEmailsApi(); // Aquí solo instancia
 // Función para generar un código de verificación
 const generateVerificationCode = () => {
     const code = Math.floor(100000 + Math.random() * 900000).toString(); // Genera un código de 6 dígitos
-    const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // Expira en 3 minutos
-    // Lógica para enviar el email...
-    return { code, expiresAt };
-
+    const expiresInMinutes = 3; // Expira en 3 minutos
+    return { code, expiresInMinutes };
 };
+
 
 // Función para enviar el código de verificación por correo
 const sendVerificationEmail = async (email) => {
@@ -27,7 +26,11 @@ const sendVerificationEmail = async (email) => {
             sender: { email: 'santiagovs1402@gmail.com' },  // Reemplaza con tu email de envío
             to: [{ email: email }],
             subject: 'Código de Verificación',
-            htmlContent: `<h3>Tu código de verificación es: ${code}</h3><p>Este código expirará en ${expiresAt.toLocaleTimeString()}</p>`
+            htmlContent: `
+            <h3>Tu código de verificación es: ${code}</h3>
+            <p>Este código expirará en ${expiresInMinutes} minuto${expiresInMinutes > 1 ? 's' : ''}.</p>
+        `,
+        
         };
 
         // Enviar el correo

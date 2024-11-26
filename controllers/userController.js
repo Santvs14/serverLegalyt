@@ -39,35 +39,31 @@ const verifyUser = async (req, res) => {
     const { email, verificationCode } = req.body;
 
     if (!email || !verificationCode) {
-        console.error('Faltan datos en la solicitud:', req.body);
         return res.status(400).json({ message: 'Correo electrónico y código requeridos' });
     }
 
     try {
-        console.log('Datos recibidos en verifyUser:', req.body);
-
-        // Buscar el registro en la base de datos
         const verificationRecord = await Verification.findOne({
             email: email.trim().toLowerCase(),
             verificationCode: verificationCode.trim(),
         });
 
-        console.log('Registro encontrado en la base de datos:', verificationRecord);
-
         if (!verificationRecord) {
-            console.error('Código de verificación no encontrado:', { email, verificationCode });
             return res.status(400).json({ message: 'Código incorrecto o no encontrado' });
         }
 
         // Verificar si el código ha expirado
-        if (new Date(verificationRecord.expiresAt) < new Date()) {
-            console.error('Código expirado:', verificationRecord.expiresAt);
+        const currentTime = Date.now();
+        const expirationTime =
+            new Date(verificationRecord.createdAt).getTime() +
+            verificationRecord.expiresInMinutes * 60 * 1000;
+
+        if (currentTime > expirationTime) {
             return res.status(400).json({ message: 'El código ha expirado' });
         }
 
         res.status(200).json({ message: 'Usuario verificado con éxito' });
     } catch (error) {
-        console.error('Error al verificar el usuario:', error);
         res.status(500).json({ message: 'Error interno del servidor', error: error.message });
     }
 };
