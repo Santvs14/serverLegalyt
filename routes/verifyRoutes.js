@@ -28,7 +28,16 @@ router.post('/verify-code', async (req, res) => {
             return res.status(400).json({ message: 'Correo electrónico y código son obligatorios' });
         }
 
+        // Sanitizar datos
+        const sanitizedEmail = email.trim().toLowerCase();
+        const sanitizedCode = verificationCode.trim();
 
+        // Validar formato de email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(sanitizedEmail)) {
+            console.error('Formato de correo electrónico no válido:', sanitizedEmail);
+            return res.status(400).json({ message: 'Formato de correo electrónico no válido' });
+        }
 
         // Validar que el código sea un número de 6 dígitos
         if (!/^\d{6}$/.test(sanitizedCode)) {
