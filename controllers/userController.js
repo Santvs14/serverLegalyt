@@ -12,8 +12,8 @@ const sendCode = async (req, res) => {
     }
 
     try {
-        // Generar código y fecha de expiración
-        const { code, expiresAt } = sendVerificationEmail(email);
+        // Generar código y fecha de expiración de manera correcta
+        const { code, expiresAt } = await sendVerificationEmail(email);  // Usa `await` aquí para esperar la resolución
 
         console.log('Intentando guardar código de verificación:', { email, verificationCode: code, expiresAt });
 
@@ -62,6 +62,7 @@ const verifyUser = async (req, res) => {
             console.error('Código expirado:', verificationRecord.expiresAt);
             return res.status(400).json({ message: 'El código ha expirado' });
         }
+        
 
         res.status(200).json({ message: 'Usuario verificado con éxito' });
     } catch (error) {
