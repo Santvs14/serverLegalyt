@@ -18,7 +18,7 @@ const sendCode = async (req, res) => {
 
         // Guarda el código en la base de datos
         const verificationRecord = await Verification.create({
-            email: email.trim().toLowerCase(),
+            email: email,
             verificationCode: code,
             expiresAt,
         });
