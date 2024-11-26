@@ -1,42 +1,38 @@
-const SibApiV3Sdk = require('sib-api-v3-sdk');  // Librería de Sendinblue
+const SibApiV3Sdk = require('sib-api-v3-sdk');
 const defaultClient = SibApiV3Sdk.ApiClient.instance;
 
-// Configura el cliente de Sendinblue con tu clave API
+// Configuración de Sendinblue
 const apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = process.env.SENDINBLUE_API_KEY;  // Asegúrate de tener tu clave de API en tus variables de entorno
-console.log('Clave de API verify:', process.env.SENDINBLUE_API_KEY);
+apiKey.apiKey = process.env.SENDINBLUE_API_KEY; // Variable de entorno para la API Key
 
-const client = new SibApiV3Sdk.TransactionalEmailsApi(); // Aquí solo instanciamos una vez el cliente
+const client = new SibApiV3Sdk.TransactionalEmailsApi(); // Instancia del cliente
 
-// Función para generar un código de verificación
+// Generar un código de verificación y fecha de expiración
 const generateVerificationCode = () => {
-    const code = Math.floor(100000 + Math.random() * 900000).toString(); // Genera un código de 6 dígitos
+    const code = Math.floor(100000 + Math.random() * 900000).toString(); // Código de 6 dígitos
     const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // Expira en 3 minutos
-    // Lógica para enviar el email...
     return { code, expiresAt };
-
 };
 
-// Función para enviar el código de verificación por correo
+// Enviar el código por correo
 const sendVerificationEmail = async (email) => {
     const { code, expiresAt } = generateVerificationCode();
 
     try {
-        // Envía el correo electrónico con el código de verificación
+        // Datos del correo
         const emailData = {
-            sender: { email: 'santiagovs1402@gmail.com' },  // Reemplaza con tu email de envío
-            to: [{ email: email }],
+            sender: { email: 'santiagovs1402@gmail.com' },
+            to: [{ email }],
             subject: 'Código de Verificación',
             htmlContent: `<h3>Tu código de verificación es: ${code}</h3><p>Este código expirará en ${expiresAt.toLocaleTimeString()}</p>`
         };
 
-        // Enviar el correo
-        await client.sendTransacEmail(emailData); // Usamos el cliente correctamente aquí
-
+        console.log(`Enviando correo a ${email} con código: ${code}`);
+        await client.sendTransacEmail(emailData); // Envía el correo
         return { code, expiresAt };
     } catch (error) {
-        console.error('Error al enviar el código de verificación:', error.response.body);
-        throw new Error('Error al enviar el código de verificación');
+        console.error('Error al enviar el correo:', error.response?.body || error.message);
+        throw new Error('Error al enviar el código de verificación.');
     }
 };
 
