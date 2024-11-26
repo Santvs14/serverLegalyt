@@ -16,10 +16,30 @@ router.post('/send-code', async (req, res) => {
     }
 });
 
-// Ruta para verificar el código
 router.post('/verify-code', async (req, res) => {
     try {
-        console.log('Datos recibidos para verificar código:', req.body); // Agregar log de depuración
+        console.log('Datos recibidos para verificar código:', req.body); // Log para depurar datos recibidos
+
+        const { email, verificationCode } = req.body;
+
+        // Validar que email y verificationCode estén presentes
+        if (!email || !verificationCode) {
+            console.error('Faltan datos en la solicitud:', req.body);
+            return res.status(400).json({ message: 'Correo electrónico y código son obligatorios' });
+        }
+
+        // Validar formato de email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email.trim())) {
+            console.error('Formato de correo electrónico no válido:', email);
+            return res.status(400).json({ message: 'Formato de correo electrónico no válido' });
+        }
+
+        // Validar que el código sea un número de 6 dígitos
+        if (!/^\d{6}$/.test(verificationCode.trim())) {
+            console.error('Formato de código no válido:', verificationCode);
+            return res.status(400).json({ message: 'Formato de código no válido' });
+        }
 
         // Llamar a la función de verificación
         await verifyUser(req, res);
