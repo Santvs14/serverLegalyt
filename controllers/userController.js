@@ -1,9 +1,8 @@
 const express = require('express');
+const Verification = require('../models/Verification'); // Modelo para almacenar códigos de verificación
+const sendVerificationEmail = require('../utils/sendVerifyEmail'); // Función para enviar email
 
-const Verification = require('../models/Verification');  // Modelo para almacenar códigos de verificación
-const sendVerificationEmail = require('../utils/sendVerifyEmail');  // Ruta del archivo de verificación (actualízalo si es necesario)
-
-// Función para enviar el código de verificación al correo electrónico
+// Función para enviar y guardar el código de verificación
 const sendCode = async (req, res) => {
     const { email } = req.body;
 
@@ -12,19 +11,23 @@ const sendCode = async (req, res) => {
     }
 
     try {
-        // Generar código y fecha de expiración de manera correcta
-        const { code, expiresAt } = await sendVerificationEmail(email);  // Usa `await` aquí para esperar la resolución
+        const trimmedEmail = email.trim().toLowerCase();
 
-        console.log('Intentando guardar código de verificación:', { email, verificationCode: code, expiresAt });
+        // Generar un código de verificación y su fecha de expiración
+        const code = Math.floor(100000 + Math.random() * 900000).toString(); // Código de 6 dígitos
+        const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // Expira en 3 minutos
 
-        // Guarda el código en la base de datos
-        const verificationRecord = await Verification.create({
-            email: email.trim().toLowerCase(),
-            verificationCode: code.trim(),
+        // Guardar el código en la base de datos
+        await Verification.create({
+            email: trimmedEmail,
+            verificationCode: code,
             expiresAt,
         });
 
-        console.log('Código de verificación guardado:', verificationRecord);
+        // Enviar el código por correo
+        await sendVerificationEmail(trimmedEmail, code);
+
+        console.log('Código de verificación generado y enviado:', { email: trimmedEmail, code });
         res.status(200).json({ message: 'Código de verificación enviado a tu correo.' });
     } catch (error) {
         console.error('Error al enviar el código:', error);
@@ -32,9 +35,7 @@ const sendCode = async (req, res) => {
     }
 };
 
-
-
-// Función para verificar el código de verificación del usuario
+// Función para verificar el código de verificación
 const verifyUser = async (req, res) => {
     const { email, verificationCode } = req.body;
 
@@ -43,9 +44,13 @@ const verifyUser = async (req, res) => {
     }
 
     try {
+        const trimmedEmail = email.trim().toLowerCase();
+        const trimmedCode = verificationCode.trim();
+
+        // Buscar el código en la base de datos
         const verificationRecord = await Verification.findOne({
-            email: email.trim().toLowerCase(),
-            verificationCode: verificationCode.trim(),
+            email: trimmedEmail,
+            verificationCode: trimmedCode,
         });
 
         if (!verificationRecord) {
@@ -54,20 +59,18 @@ const verifyUser = async (req, res) => {
 
         // Verificar si el código ha expirado
         const currentTime = Date.now();
-        const expirationTime =
-            new Date(verificationRecord.createdAt).getTime() +
-            verificationRecord.expiresInMinutes * 60 * 1000;
-
-        if (currentTime > expirationTime) {
+        if (currentTime > new Date(verificationRecord.expiresAt).getTime()) {
             return res.status(400).json({ message: 'El código ha expirado' });
         }
 
+        // Eliminar el registro de la base de datos tras la verificación exitosa
+        await Verification.deleteOne({ email: trimmedEmail });
+
         res.status(200).json({ message: 'Usuario verificado con éxito' });
     } catch (error) {
-        res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+        console.error('Error al verificar código:', error);
+        res.status(500).json({ message: 'Error interno del servidor', error });
     }
 };
-
-
 
 module.exports = { sendCode, verifyUser };
