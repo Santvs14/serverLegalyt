@@ -21,10 +21,10 @@ const sendVerificationEmail = async (email) => {
     try {
         // Datos del correo
         const emailData = {
-            sender: { email: 'santiagovs1402@gmail.com' },
+            sender: { email: 'santiagovs1402@gmail.com', name: 'Verify Code' },
             to: [{ email }],
             subject: 'Código de Verificación',
-            htmlContent: `<h3>Tu código de verificación es: ${code}</h3><p>Este código expirará en ${expiresAt.toLocaleTimeString()}</p>`
+            htmlContent: `<h3>Tu código de verificación es: ${code}</h3><p>Este código expirará en 3 minutos: ${expiresAt.toLocaleTimeString()}</p>`
         };
 
         console.log(`Enviando correo a ${email} con código: ${code}`);
