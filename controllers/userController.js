@@ -1,5 +1,6 @@
 const express = require('express');
 const Verification = require('../models/Verification');
+const User = require('../models/User'); // Asegúrate de importar el modelo de usuario
 const sendVerificationEmail = require('../utils/sendVerifyEmail');
 
 // Enviar código de verificación
@@ -11,11 +12,19 @@ const sendCode = async (req, res) => {
     }
 
     try {
-        const { code, expiresAt } = await sendVerificationEmail(email);
+        const trimmedEmail = email.trim().toLowerCase();
+
+        // Verificar si el correo está registrado
+        const userExists = await User.findOne({ email: trimmedEmail });
+        if (!userExists) {
+            return res.status(404).json({ message: 'Este correo no existe en el sistema.' });
+        }
+
+        const { code, expiresAt } = await sendVerificationEmail(trimmedEmail);
 
         // Guardar el código en la base de datos
         const verificationRecord = new Verification({
-            email: email.trim().toLowerCase(),
+            email: trimmedEmail,
             verificationCode: code,
             expiresAt
         });

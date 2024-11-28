@@ -15,7 +15,7 @@ router.post('/register', async (req, res) => {
       
 
     try {
-        // Validación de la contraseña
+        // Validación  de contraseña segura
         const contraseñaSegura = /^(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[a-zA-Z\d!@#$%^&*(),.?":{}|<>]{5,}$/;
 
         if (!contraseñaSegura.test(contraseña)) {
