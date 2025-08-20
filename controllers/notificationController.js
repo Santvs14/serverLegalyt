@@ -61,8 +61,7 @@ const notifyStatusChange = async (email, estado, _id) => {
       if (certificacion && certificacion.archivoCertificado) {
         message = `¡Enhorabuena! Su solicitud ha sido aprobada. Aqui tiene anexada la certificación, lo cual cuenta como un documento válido para su posterior uso. </br></br>Puede descargar su certificado aquí: <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;
       } else {
-        message = '¡Enhorabuena! Su solicitud ha sido aprobada. El archivo del certificado no está disponible.</br> para saber los motivos visite nuestras oficinas o contacte vía teléfono: (809) 731 1100  | Fax: 809-731-1101 | Horario:De 8:00 a.m. a 4:00 p.m. de Lunes a Viernes.';
-      }
+        message = `¡Enhorabuena! Su solicitud ha sido aprobada. Aqui tiene anexada la certificación, lo cual cuenta como un documento válido para su posterior uso. </br></br>Puede descargar su certificado aquí: <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;      }
     } catch (error) {
       console.error('Error al obtener el certificado:', error);
       message = '¡Enhorabuena! Su solicitud ha sido aprobada. Hubo un error al obtener el archivo del certificado.';
