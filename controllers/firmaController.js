@@ -3,6 +3,7 @@ const Firma = require('../models/Firma');
 const guardarFirma = async (req, res) => {
   const { firmaDataUrl, adminId, solicitudId } = req.body;
   //setUser({ ...data, adminId: data.adminId }); // Asegúrate de que adminId esté presente
+  console.log('Valor adminId:', adminId);
 
   try {
     const nuevaFirma = new Firma({
