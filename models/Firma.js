@@ -22,6 +22,7 @@ const FirmaSchema = new Schema({
     type: Date,
     default: Date.now
   }
-});
+}, { collection: 'Firma' }); // 👈 fuerza a usar la colección "Firma"
+
 
 module.exports = mongoose.model('Firma', FirmaSchema);
