@@ -55,9 +55,9 @@ exports.generarCertificado = async (req, res) => {
         console.log('Subiendo certificado a Cloudinary...');
         const uploadStream = cloudinary.uploader.upload_stream(
           {
-            folder: 'certificaciones',
-            resource_type: 'auto', // Prueba como imagen para permitir la visualización en navegador
-            public_id: `certificado_${solicitudId}`,
+            folder: 'certificaciones',//Carpeta en Cloudinary
+            resource_type: 'raw', // Prueba como imagen para permitir la visualización en navegador
+            public_id: `certificado_${solicitudId}`,//Nombre del pdf
             overwrite: true,
           },
           async (error, result) => {
