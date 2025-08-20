@@ -22,7 +22,6 @@ exports.registerUser = async (req, res) => {
 };
 
 // Inicio de sesión
-// Inicio de sesión
 exports.login = async (req, res) => {
     const { username, password } = req.body;
     
@@ -33,19 +32,8 @@ exports.login = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: 'Contraseña incorrecta' });
 
-        const token = jwt.sign(
-            { id: user._id, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' }
-        );
-
-        // 👇 aquí enviamos todo lo necesario al frontend
-        res.json({
-            token,
-            adminId: user._id,
-            username: user.username,
-            role: user.role
-        });
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.json({ token, role: user.role });
     } catch (error) {
         res.status(500).json({ message: 'Error al iniciar sesión' });
     }
