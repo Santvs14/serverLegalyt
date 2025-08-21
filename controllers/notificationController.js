@@ -43,7 +43,7 @@ const sendEmailNotification = async (email, subject, message) => {
 
 
 
-const notifyStatusChange = async ( email, estado) => {
+const notifyStatusChange = async (solicitudId, email, estado) => {
   let subject = 'Actualización de estado de la solicitud';
   let message = '';
 
