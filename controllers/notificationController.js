@@ -43,57 +43,67 @@ const sendEmailNotification = async (email, subject, message) => {
 
 
 
+/**
+ * Función para notificar el cambio de estado de una solicitud
+ */
+const notifyStatusChange = async (solicitudId, estado) => {
+  console.log(`[Notify] Iniciando notificación para solicitudId: ${solicitudId}, estado: ${estado}`);
 
-const notifyStatusChange = async (email, estado,solicitudId ) => {
-  let subject = 'Actualización de estado de la solicitud';
-  let message = '';
+  try {
+    // 1️⃣ Buscar la solicitud
+    const solicitud = await Solicitud.findById(solicitudId);
+    if (!solicitud) {
+      console.log('[Notify] Solicitud no encontrada');
+      return;
+    }
+    console.log(`[Notify] Solicitud encontrada: ${solicitud.nombre} ${solicitud.apellido}`);
 
+    // 2️⃣ Inicializar mensaje
+    let message = '';
+    let certificadoInfo = null;
 
-  // Primero, obtenemos el archivoCertificado si el estado es 'aprobado'
-  if (estado === 'aprobado') {
-    try {
-      // Buscar el archivoCertificado en la colección Certificacion por solicitudId
-    //  const certificacion = await certificacions.findOne({ solicitudId });
-    const certificacionId = await Certificacion.findOne({ solicitudId });
-
-      // Verifica lo que devuelve la consulta
-      console.log('Certificación encontrada:', certificacionId);
-
-
-
-      // Si existe un archivoCertificado, lo incluimos en el mensaje
-      if (certificacionId && certificacionId.archivoCertificado) {
-        message = `¡Enhorabuena! Su solicitud ha sido aprobada. Aqui tiene anexada la certificación, lo cual cuenta como un documento válido para su posterior uso. </br></br>Puede descargar su certificado aquí: <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;
+    // 3️⃣ Si es aprobado, buscar certificación
+    if (estado === 'aprobado') {
+      certificadoInfo = await Certificacion.findOne({ solicitudId });
+      if (certificadoInfo) {
+        console.log('[Notify] Certificación encontrada:', certificadoInfo._id);
+        if (certificadoInfo.archivoCertificado) {
+          message = `¡Enhorabuena! Su solicitud ha sido aprobada.<br>
+          Puede descargar su certificado aquí: <a href="${certificadoInfo.archivoCertificado}" target="_blank">Descargar certificado</a>`;
+        } else {
+          message = '¡Enhorabuena! Su solicitud ha sido aprobada. El archivo del certificado no está disponible.';
+        }
       } else {
-        message = '¡Enhorabuena! Su solicitud ha sido aprobada. El archivo del certificado no está disponible.';
+        console.log('[Notify] No se encontró certificación para esta solicitud');
+        message = '¡Enhorabuena! Su solicitud ha sido aprobada. No se encontró el certificado.';
       }
-    } catch (error) {
-      console.error('Error al obtener el certificado:', error);
-      message = '¡Enhorabuena! Su solicitud ha sido aprobada. Hubo un error al obtener el archivo del certificado.';
+    } else {
+      // Mensajes estándar para otros estados
+      switch (estado) {
+        case 'pendiente':
+          message = 'Su solicitud ha sido recibida y está pendiente de revisión.';
+          break;
+        case 'revisión':
+          message = 'Su solicitud está actualmente en revisión.';
+          break;
+        case 'verificado':
+          message = 'Su solicitud ha sido verificada con éxito.';
+          break;
+        case 'rechazado':
+        default:
+          message = 'Su solicitud ha sido rechazada. Para más información contacte nuestras oficinas o vía teléfono.';
+      }
     }
-  } else {
-    switch (estado) {
-      case 'pendiente':
-        message = 'Su solicitud ha sido recibida y está pendiente de revisión.';
-        break;
-      case 'revisión':
-        message = 'Su solicitud está actualmente en revisión.';
-        break;
-      case 'verificado':
-        message = 'Su solicitud ha sido verificada con éxito.';
-        break;
-      case 'rechazado':
-        message = 'Su solicitud ha sido rechazada, </br> para saber los motivos visite nuestras oficinas o contacte vía teléfono: (809) 731 1100  | Fax: 809-731-1101 | Horario:De 8:00 a.m. a 4:00 p.m. de Lunes a Viernes.';
-        break;
-      default:
-        message = 'Su solicitud ha sido rechazada, </br> para saber los motivos visite nuestras oficinas o contacte vía teléfono: (809) 731 1100  | Fax: 809-731-1101 | Horario:De 8:00 a.m. a 4:00 p.m. de Lunes a Viernes.';
-    }
+
+    // 4️⃣ Enviar correo
+    const result = await sendEmailNotification(solicitud.email, 'Actualización de estado de la solicitud', message);
+    console.log('[Notify] Resultado del envío:', result);
+
+  } catch (error) {
+    console.error('[Notify] Error durante la notificación:', error);
   }
 
-  // Enviar la notificación por correo
-  await sendEmailNotification(email, subject, message);
+  console.log('[Notify] Proceso de notificación finalizado');
 };
 
-
-
-module.exports = { sendEmailNotification,notifyStatusChange };
+module.exports = { sendEmailNotification, notifyStatusChange };
