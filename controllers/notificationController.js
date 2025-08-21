@@ -8,7 +8,7 @@ const defaultClient = SibApiV3Sdk.ApiClient.instance;
 const apiKey = defaultClient.authentications['api-key'];
 apiKey.apiKey = process.env.SENDINBLUE_API_KEY;
 
-const { obtenerSolicitudYCertificacion } = require('./idSolicitudCerti');
+const { generarCertificado  } = require('./certificacionController');
 
 // Función para enviar correo
 const sendEmailNotification = async (email, subject, message) => {
@@ -35,7 +35,7 @@ const notifyStatusChange = async (solicitudId, estado) => {
 
     try {
         // Obtener solicitud y certificación asociada
-        const data = await obtenerSolicitudYCertificacion(solicitudId);
+        const data = await generarCertificado(solicitudId);
 
         if (!data) {
             console.log('[Notify] La solicitud no existe');
