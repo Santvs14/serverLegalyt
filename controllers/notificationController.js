@@ -52,10 +52,11 @@ const notifyStatusChange = async (email, estado, solicitudId) => {
 
   try {
     if (estado === 'aprobado') {
-      // Traer todas las certificaciones
-      const certificaciones = await Certificacion.find();
-      // Buscar la que coincide con el ID de la solicitud
-      const certificacion = certificaciones.find(c => c.solicitudId.toString() === solicitudId);
+      // Convertimos solicitudId a ObjectId para la búsqueda
+      const objSolicitudId = new mongoose.Types.ObjectId(solicitudId);
+
+      // Buscar directamente en la base de datos
+      const certificacion = await Certificacion.findOne({ solicitudId: objSolicitudId });
 
       console.log('Certificación encontrada para enviar por correo:', certificacion);
 
@@ -65,7 +66,9 @@ const notifyStatusChange = async (email, estado, solicitudId) => {
       } else {
         message = '¡Enhorabuena! Su solicitud ha sido aprobada, pero el archivo del certificado no está disponible.';
       }
+
     } else {
+      // Otros estados
       switch (estado) {
         case 'pendiente':
           message = 'Su solicitud ha sido recibida y está pendiente de revisión.';
@@ -83,6 +86,7 @@ const notifyStatusChange = async (email, estado, solicitudId) => {
     }
 
     await sendEmailNotification(email, subject, message);
+
   } catch (error) {
     console.error('Error en notifyStatusChange:', error);
   }
