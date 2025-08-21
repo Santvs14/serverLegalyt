@@ -43,15 +43,16 @@ const sendEmailNotification = async (email, subject, message) => {
 
 
 
-const notifyStatusChange = async (solicitudId, email, estado) => {
+const notifyStatusChange = async ( email, estado) => {
   let subject = 'Actualización de estado de la solicitud';
   let message = '';
 
-  const solicitud = await Solicitud.findOne({ email: email }).lean();
+  const solicitud = await Solicitud.findById(solicitudId);
 if (!solicitud) {
   console.log('No se encontró la solicitud para este email');
   return;
-}
+}        console.log(`Solicitud encontrada: ${solicitud.nombre} ${solicitud.apellido} ${solicitud._id}`); // Log para confirmar que la solicitud fue encontrada
+
 
 
   try {
