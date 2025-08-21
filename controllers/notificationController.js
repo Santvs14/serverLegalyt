@@ -2,7 +2,7 @@
 require('dotenv').config(); // Asegúrate de que esto esté al inicio del archivo
 console.log('API Key-SENDINBLUE:', process.env.SENDINBLUE_API_KEY); // Asegúrate de que la clave se imprime correctamente
 
-
+const Solicitud = require('../models/Solicitud');
 const Certificacion = require('../models/certificacion'); // Asegúrate de tener el modelo correcto
 
 //acceder a la autenticación
@@ -47,9 +47,16 @@ const notifyStatusChange = async (solicitudId, email, estado) => {
   let subject = 'Actualización de estado de la solicitud';
   let message = '';
 
+  const solicitud = await Solicitud.findOne({ email: email }).lean();
+if (!solicitud) {
+  console.log('No se encontró la solicitud para este email');
+  return;
+}
+
+
   try {
       // Buscar la certificación usando el ID de la solicitud
-      const certificacion = await Certificacion.findOne({ solicitudId }).populate('admins');
+      const certificacion = await Certificacion.findOne({ solicitudId: solicitud._id }).lean();
 
 
       if (!certificacion) {
