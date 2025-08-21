@@ -52,21 +52,28 @@ const notifyStatusChange = async (email, estado, solicitudId) => {
 
   try {
     if (estado === 'aprobado') {
+      // Convierte solicitudId a ObjectId si es necesario
+      let objId;
+      try {
+        objId = new mongoose.Types.ObjectId(solicitudId);
+      } catch (err) {
+        console.error('Error convirtiendo solicitudId a ObjectId:', err);
+        objId = solicitudId; // si ya es string
+      }
+
       // Buscar la certificación asociada a la solicitud
-      const certificacion = await Certificacion.findOne({ solicitudId: new mongoose.Types.ObjectId(solicitudId) });
-
-
+      const certificacion = await Certificacion.findOne({ solicitudId: objId });
       console.log('Certificación encontrada para enviar por correo:', certificacion);
 
       if (certificacion && certificacion.archivoCertificado) {
-        // URL completa del certificado
-        const urlCertificado = certificacion.archivoCertificado; 
         message = `¡Enhorabuena! Su solicitud ha sido aprobada. Puede descargar su certificado aquí: 
-        <a href="${urlCertificado}" target="_blank">Descargar certificado</a>`;
+        <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;
       } else {
         message = '¡Enhorabuena! Su solicitud ha sido aprobada, pero el archivo del certificado no está disponible.';
       }
+
     } else {
+      // Otros estados
       switch (estado) {
         case 'pendiente':
           message = 'Su solicitud ha sido recibida y está pendiente de revisión.';
@@ -83,12 +90,12 @@ const notifyStatusChange = async (email, estado, solicitudId) => {
       }
     }
 
-    await sendEmailNotification(email, subject, message,solicitudId);
+    // Enviar el correo
+    await sendEmailNotification(email, subject, message);
+
   } catch (error) {
     console.error('Error en notifyStatusChange:', error);
   }
 };
 
-
-
-module.exports = { sendEmailNotification,notifyStatusChange };
+module.exports = { sendEmailNotification, notifyStatusChange };
