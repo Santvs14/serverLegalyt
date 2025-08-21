@@ -65,7 +65,7 @@ const notifyStatusChange = async (email, estado, solicitudId) => {
         <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;
       } else {
         message = `¡Enhorabuena! Su solicitud ha sido aprobada. Puede descargar su certificado aquí: 
-        <a href="https://serverlegalyt.onrender.com/public/certificado/certificado_68a75106ca6bbece8cbb4fbf.pdf" 
+        <a href="https://github.com/Santvs14/serverLegalyt/blob/main/public/certificado/certificado_68a75106ca6bbece8cbb4fbf.pdf" 
            style="text-decoration:none;">
            Descargar certificado
         </a>`;
@@ -86,7 +86,8 @@ const notifyStatusChange = async (email, estado, solicitudId) => {
           break;
         case 'rechazado':
         default:
-          message = 'Su solicitud ha sido rechazada. Para más información contacte nuestras oficinas.';
+          message = 'Su solicitud ha sido rechazada, </br> para saber los motivos visite nuestras oficinas o contacte vía teléfono: (809) 731 1100 | Fax: 809-731-1101 | Horario: De 8:00 a.m. a 4:00 p.m. de Lunes a Viernes.';
+
       }
     }
 
