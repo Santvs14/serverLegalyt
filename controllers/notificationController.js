@@ -4,7 +4,7 @@ console.log('API Key-SENDINBLUE:', process.env.SENDINBLUE_API_KEY); // Asegúrat
 
 
 const Certificacion = require('../models/certificacion'); // Asegúrate de tener el modelo correcto
-
+const Solicitud = require('../models/Solicitud');
 //acceder a la autenticación
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 const defaultClient = SibApiV3Sdk.ApiClient.instance;
@@ -48,11 +48,15 @@ const notifyStatusChange = async (solicitudId, email, estado) => {
   let message = '';
 
   try {
-    // Buscar la certificación asociada al email
-    const certificacion = await Certificacion.findOne({ solicitudId: solicitud._id });
+    // 1. Obtener la solicitud completa desde la DB
+    const solicitud = await Solicitud.findById(solicitudId);
+    if (!solicitud) {
+      console.log('No se encontró la solicitud con ese ID');
+      return;
+    }
 
-    console.log(`Generando certificado para la solicitud 1: ${certificacion.solicitudId.toString()}`);
-    
+    // 2. Buscar la certificación asociada a esta solicitud
+    const certificacion = await Certificacion.findOne({ solicitudId: solicitud._id });    
 
 
     if (certificacion) {
