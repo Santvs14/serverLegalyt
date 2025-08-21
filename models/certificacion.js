@@ -1,9 +1,8 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
 const certificacionSchema = new mongoose.Schema({
     solicitudId: {
-        type: Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'Solicitud',
         required: true},
     nombre: {
