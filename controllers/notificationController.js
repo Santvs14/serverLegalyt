@@ -1,75 +1,79 @@
-require('dotenv').config();
-console.log('API Key-SENDINBLUE:', process.env.SENDINBLUE_API_KEY);
 
-const Solicitud = require('../models/Solicitud');
-const Firma = require('../models/Firma');
-const Certificacion = require('../models/certificacion');
+require('dotenv').config(); // Asegúrate de que esto esté al inicio del archivo
+console.log('API Key-SENDINBLUE:', process.env.SENDINBLUE_API_KEY); // Asegúrate de que la clave se imprime correctamente
+const mongoose = require('mongoose');
+const Solicitud = require('../models/Solicitud'); 
+const Firma = require('../models/Firma');  
+const Certificacion = require('../models/certificacion'); 
 
+
+const Certificacion = require('../models/certificacion'); // Asegúrate de tener el modelo correcto
+
+//acceder a la autenticación
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 const defaultClient = SibApiV3Sdk.ApiClient.instance;
-const apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = process.env.SENDINBLUE_API_KEY;
 
-/**
- * Enviar correo
- */
+// Asegúrate de que el nombre de la autenticación sea correcto
+const apiKey = defaultClient.authentications['api-key'];
+apiKey.apiKey = process.env.SENDINBLUE_API_KEY; // Asegúrate de tener tu clave de API en tus variables de entorno
+
+
 const sendEmailNotification = async (email, subject, message) => {
   const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+
   const sendSmtpEmail = {
-    to: [{ email }],
+    to: [{ email: email }],
     sender: { email: 'santiagovs1402@gmail.com', name: 'Mescyt' },
-    subject,
-    htmlContent: `<html><body>${message}</body></html>`,
+    subject: subject,
+    htmlContent: `<html>
+    <body><p>${message} </p>
+
+
+    </body></html>`,
   };
 
   try {
-    console.log(`[Email] Enviando correo a: ${email}`);
     await apiInstance.sendTransacEmail(sendSmtpEmail);
-    console.log('[Email] Correo enviado exitosamente');
+    console.log('Email enviado exitosamente', sendSmtpEmail);
   } catch (error) {
-    console.error('[Email] Error al enviar correo:', error);
+    console.error('Error al enviar email:', error);
   }
 };
 
-/**
- * Notificación de cambio de estado
- * @param {String} identifier Puede ser email o ObjectId de solicitud
- * @param {String} estado Estado de la solicitud
- */
-const notifyStatusChange = async (identifier, estado) => {
-  console.log(`[Notify] Iniciando notificación para identifier: ${identifier}, estado: ${estado}`);
+
+
+
+
+
+
+
+const notifyStatusChange = async (email, estado, solicitudId) => {
+  console.log(`[Notify] Iniciando notificación para solicitudId: ${solicitudId}, estado: ${estado}`);
+  let subject = 'Actualización de estado de la solicitud';
+  let message = '';
 
   try {
-    // Detectar si el identifier es ObjectId o email
-    let solicitud;
-    if (mongoose.Types.ObjectId.isValid(identifier)) {
-      solicitud = await Solicitud.findById(identifier);
-    } else {
-      solicitud = await Solicitud.findOne({ email: identifier });
-    }
-
+    // 1. Buscar la solicitud en la base de datos
+    const solicitud = await Solicitud.findById(solicitudId);
     if (!solicitud) {
-      console.log('[Notify] La solicitud no existe para este identificador');
+      console.log('[Notify] La solicitud no existe');
       return;
     }
+    console.log(`[Notify] Solicitud encontrada: ${solicitud.nombre} ${solicitud.apellido}, email: ${solicitud.email}`);
 
-    console.log(`[Notify] Solicitud encontrada: ${solicitud.nombre} ${solicitud.apellido}, id: ${solicitud._id}, email: ${solicitud.email}`);
+    // 2. Buscar la certificación usando el _id de la solicitud
+    const certificacion = await Certificacion.findOne({ solicitudId: solicitud._id });
+    console.log('[Notify] Certificación encontrada:', certificacion ? certificacion._id : 'No existe');
 
-    // Buscar la firma
-    const firma = await Firma.findOne({ solicituds: solicitud._id }).populate('admins');
-    console.log('[Notify] Firma encontrada:', firma?._id || 'No existe');
-
-    // Buscar certificación si estado es 'aprobado'
-    let message = '';
+    // 3. Lógica de mensajes según estado
     if (estado === 'aprobado') {
-      const certificacion = await Certificacion.findOne({ solicitudId: solicitud._id });
-      console.log('[Notify] Certificación encontrada:', certificacion?._id || 'No existe');
-
       if (certificacion && certificacion.archivoCertificado) {
-        message = `¡Enhorabuena! Su solicitud ha sido aprobada.<br>
+        message = `¡Enhorabuena ${solicitud.nombre} ${solicitud.apellido}! Su solicitud ha sido aprobada. 
+        Aqui tiene anexada la certificación, lo cual cuenta como un documento válido para su posterior uso.<br><br>
         Puede descargar su certificado aquí: <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;
       } else {
-        message = '¡Enhorabuena! Su solicitud ha sido aprobada. El archivo del certificado no está disponible.';
+        message = `¡Enhorabuena ${solicitud.nombre} ${solicitud.apellido}! Su solicitud ha sido aprobada. 
+        El archivo del certificado no está disponible.`;
       }
     } else {
       switch (estado) {
@@ -84,12 +88,12 @@ const notifyStatusChange = async (identifier, estado) => {
           break;
         case 'rechazado':
         default:
-          message = 'Su solicitud ha sido rechazada. Para más información contacte nuestras oficinas o vía teléfono.';
+          message = 'Su solicitud ha sido rechazada, para saber los motivos visite nuestras oficinas o contacte vía teléfono: (809) 731 1100.';
       }
     }
 
-    // Enviar correo
-    await sendEmailNotification(solicitud.email, 'Actualización de estado de la solicitud', message);
+    // 4. Enviar la notificación por correo
+    await sendEmailNotification(email, subject, message);
     console.log('[Notify] Proceso de notificación finalizado');
 
   } catch (error) {
