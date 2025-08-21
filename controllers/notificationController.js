@@ -1,10 +1,10 @@
 
-require('dotenv').config(); // Asegúrate de que esto esté al inicio del archivo
+ require('dotenv').config();
 console.log('API Key-SENDINBLUE:', process.env.SENDINBLUE_API_KEY); // Asegúrate de que la clave se imprime correctamente
 
 
 const Certificacion = require('../models/certificacion'); // Asegúrate de tener el modelo correcto
-
+const Solicitud = require('../models/Solicitud');
 //acceder a la autenticación
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 const defaultClient = SibApiV3Sdk.ApiClient.instance;
@@ -43,51 +43,46 @@ const sendEmailNotification = async (email, subject, message) => {
 
 
 
-const notifyStatusChange = async (email, estado, _id) => {
+// Función para notificar cambios de estado
+const notifyStatusChange = async (email, estado, solicitudId) => {
   let subject = 'Actualización de estado de la solicitud';
   let message = '';
 
-  // Primero, obtenemos el archivoCertificado si el estado es 'aprobado'
-  if (estado === 'aprobado') {
-    try {
-      // Buscar el archivoCertificado en la colección Certificacion por solicitudId
-      const certificacion = await Certificacion.findById(_id);
-
-
-      // Verifica lo que devuelve la consulta
+  try {
+    if (estado === 'aprobado') {
+      // Buscar la certificación asociada a la solicitud
+      const certificacion = await Certificacion.findOne({ solicitudId });
       console.log('Certificación encontrada:', certificacion);
 
-      // Si existe un archivoCertificado, lo incluimos en el mensaje
       if (certificacion && certificacion.archivoCertificado) {
-        message = `¡Enhorabuena! Su solicitud ha sido aprobada. Aqui tiene anexada la certificación, lo cual cuenta como un documento válido para su posterior uso. </br></br>Puede descargar su certificado aquí: <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;
+        // URL completa del certificado
+        const urlCertificado = certificacion.archivoCertificado; 
+        message = `¡Enhorabuena! Su solicitud ha sido aprobada. Puede descargar su certificado aquí: 
+        <a href="${urlCertificado}" target="_blank">Descargar certificado</a>`;
       } else {
-        message = '¡Enhorabuena! Su solicitud ha sido aprobada. El archivo del certificado no está disponible.';
+        message = '¡Enhorabuena! Su solicitud ha sido aprobada, pero el archivo del certificado no está disponible.';
       }
-    } catch (error) {
-      console.error('Error al obtener el certificado:', error);
-      message = '¡Enhorabuena! Su solicitud ha sido aprobada. Hubo un error al obtener el archivo del certificado.';
+    } else {
+      switch (estado) {
+        case 'pendiente':
+          message = 'Su solicitud ha sido recibida y está pendiente de revisión.';
+          break;
+        case 'revisión':
+          message = 'Su solicitud está actualmente en revisión.';
+          break;
+        case 'verificado':
+          message = 'Su solicitud ha sido verificada con éxito.';
+          break;
+        case 'rechazado':
+        default:
+          message = 'Su solicitud ha sido rechazada. Para más información contacte nuestras oficinas.';
+      }
     }
-  } else {
-    switch (estado) {
-      case 'pendiente':
-        message = 'Su solicitud ha sido recibida y está pendiente de revisión.';
-        break;
-      case 'revisión':
-        message = 'Su solicitud está actualmente en revisión.';
-        break;
-      case 'verificado':
-        message = 'Su solicitud ha sido verificada con éxito.';
-        break;
-      case 'rechazado':
-        message = 'Su solicitud ha sido rechazada, </br> para saber los motivos visite nuestras oficinas o contacte vía teléfono: (809) 731 1100  | Fax: 809-731-1101 | Horario:De 8:00 a.m. a 4:00 p.m. de Lunes a Viernes.';
-        break;
-      default:
-        message = 'Su solicitud ha sido rechazada, </br> para saber los motivos visite nuestras oficinas o contacte vía teléfono: (809) 731 1100  | Fax: 809-731-1101 | Horario:De 8:00 a.m. a 4:00 p.m. de Lunes a Viernes.';
-    }
-  }
 
-  // Enviar la notificación por correo
-  await sendEmailNotification(email, subject, message);
+    await sendEmailNotification(email, subject, message,solicitudId);
+  } catch (error) {
+    console.error('Error en notifyStatusChange:', error);
+  }
 };
 
 
