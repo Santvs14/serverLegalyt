@@ -1,83 +1,73 @@
+require('dotenv').config();
+console.log('API Key-SENDINBLUE:', process.env.SENDINBLUE_API_KEY);
 
-require('dotenv').config(); // Asegúrate de que esto esté al inicio del archivo
-console.log('API Key-SENDINBLUE:', process.env.SENDINBLUE_API_KEY); // Asegúrate de que la clave se imprime correctamente
+const Solicitud = require('../models/Solicitud'); 
+const Firma = require('../models/Firma');  
+const Certificacion = require('../models/certificacion');
 
-
-const Solicitud = require('../models/Solicitud'); // ✅ Import correcto
-
-const Certificacion = require('../models/certificacion'); // Asegúrate de tener el modelo correcto
-
-//acceder a la autenticación
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 const defaultClient = SibApiV3Sdk.ApiClient.instance;
-
-// Asegúrate de que el nombre de la autenticación sea correcto
 const apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = process.env.SENDINBLUE_API_KEY; // Asegúrate de tener tu clave de API en tus variables de entorno
+apiKey.apiKey = process.env.SENDINBLUE_API_KEY;
 
-
+/**
+ * Función para enviar correo
+ */
 const sendEmailNotification = async (email, subject, message) => {
   const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
   const sendSmtpEmail = {
-    to: [{ email: email }],
+    to: [{ email }],
     sender: { email: 'santiagovs1402@gmail.com', name: 'Mescyt' },
-    subject: subject,
-    htmlContent: `<html>
-    <body><p>${message} </p>
-
-
-    </body></html>`,
+    subject,
+    htmlContent: `<html><body>${message}</body></html>`,
   };
 
   try {
+    console.log(`[Email] Enviando correo a: ${email}`);
     await apiInstance.sendTransacEmail(sendSmtpEmail);
-    console.log('Email enviado exitosamente', sendSmtpEmail);
+    console.log('[Email] Correo enviado exitosamente');
   } catch (error) {
-    console.error('Error al enviar email:', error);
+    console.error('[Email] Error al enviar correo:', error);
   }
 };
 
-
-
-
-
-
-
 /**
- * Función para notificar el cambio de estado de una solicitud
- * @param {string} solicitudId - ID de la solicitud en MongoDB
- * @param {string} estado - Estado de la solicitud ('aprobado', 'pendiente', etc.)
+ * Función para notificar cambios de estado de la solicitud
  */
 const notifyStatusChange = async (solicitudId, estado) => {
   console.log(`[Notify] Iniciando notificación para solicitudId: ${solicitudId}, estado: ${estado}`);
 
+  let subject = 'Actualización de estado de la solicitud';
+  let message = '';
+
   try {
-    // 1️⃣ Buscar la solicitud por ID
+    // 1️⃣ Buscar la solicitud en la base de datos
     const solicitud = await Solicitud.findById(solicitudId);
     if (!solicitud) {
-      console.error('[Notify] Solicitud no encontrada');
+      console.log('[Notify] La solicitud no existe');
       return;
     }
     console.log(`[Notify] Solicitud encontrada: ${solicitud.nombre} ${solicitud.apellido}, email: ${solicitud.email}`);
 
-    let message = '';
-    let certificadoInfo = null;
+    // 2️⃣ Buscar la firma asociada a la solicitud
+    const firma = await Firma.findOne({ solicituds: solicitudId }).populate('admins');
+    if (!firma) {
+      console.log('[Notify] La firma no existe para esta solicitud');
+    } else {
+      console.log('[Notify] Firma encontrada:', firma._id);
+    }
 
-    // 2️⃣ Si el estado es aprobado, buscar certificación
+    // 3️⃣ Obtener certificación si el estado es 'aprobado'
     if (estado === 'aprobado') {
-      certificadoInfo = await Certificacion.findOne({ solicitudId });
-      if (certificadoInfo) {
-        console.log(`[Notify] Certificación encontrada: ${certificadoInfo._id}`);
-        if (certificadoInfo.archivoCertificado) {
-          message = `¡Enhorabuena! Su solicitud ha sido aprobada.<br>
-          Puede descargar su certificado aquí: <a href="${certificadoInfo.archivoCertificado}" target="_blank">Descargar certificado</a>`;
-        } else {
-          message = '¡Enhorabuena! Su solicitud ha sido aprobada. El archivo del certificado no está disponible.';
-        }
+      const certificacion = await Certificacion.findOne({ solicitudId });
+      console.log('[Notify] Certificación encontrada:', certificacion?._id || 'No disponible');
+
+      if (certificacion && certificacion.archivoCertificado) {
+        message = `¡Enhorabuena! Su solicitud ha sido aprobada. Aquí tiene anexada la certificación, lo cual cuenta como un documento válido para su posterior uso.<br><br>
+        Puede descargar su certificado aquí: <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;
       } else {
-        console.log('[Notify] No se encontró certificación para esta solicitud');
-        message = '¡Enhorabuena! Su solicitud ha sido aprobada. No se encontró el certificado.';
+        message = '¡Enhorabuena! Su solicitud ha sido aprobada. El archivo del certificado no está disponible.';
       }
     } else {
       // Mensajes estándar para otros estados
@@ -93,19 +83,17 @@ const notifyStatusChange = async (solicitudId, estado) => {
           break;
         case 'rechazado':
         default:
-          message = 'Su solicitud ha sido rechazada. Para más información contacte nuestras oficinas o vía teléfono.';
+          message = 'Su solicitud ha sido rechazada. Para más información visite nuestras oficinas o contacte vía teléfono: (809) 731 1100 | Fax: 809-731-1101 | Horario: 8:00 a.m. - 4:00 p.m. de lunes a viernes.';
       }
     }
 
-    // 3️⃣ Enviar correo
-    const result = await sendEmailNotification(solicitud.email, 'Actualización de estado de la solicitud', message);
-    console.log(`[Notify] Resultado del envío: ${result}`);
+    // 4️⃣ Enviar correo al email de la solicitud
+    await sendEmailNotification(solicitud.email, subject, message);
+    console.log('[Notify] Proceso de notificación finalizado');
 
   } catch (error) {
     console.error('[Notify] Error durante la notificación:', error);
   }
-
-  console.log('[Notify] Proceso de notificación finalizado');
 };
 
 module.exports = { sendEmailNotification, notifyStatusChange };
