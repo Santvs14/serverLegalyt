@@ -30,62 +30,40 @@ const sendEmailNotification = async (email, subject, message) => {
 };
 
 // Función principal de notificación
-const notifyStatusChange = async (solicitudId, estado) => {
-  if (!solicitudId) {
-    console.error('Error: solicitudId es undefined');
+const notifyStatusChange = async (solicitudIdOrEmail, estado) => {
+  let solicitud;
+
+  // Detectamos si es un ObjectId válido
+  if (/^[0-9a-fA-F]{24}$/.test(solicitudIdOrEmail)) {
+    solicitud = await Solicitud.findById(solicitudIdOrEmail);
+  } else {
+    // Si no es un ObjectId, asumimos que es el email
+    solicitud = await Solicitud.findOne({ email: solicitudIdOrEmail });
+  }
+
+  if (!solicitud) {
+    console.log('[Notify] La solicitud no existe');
     return;
   }
 
-  console.log(`[Notify] Iniciando notificación para solicitudId: ${solicitudId}, estado: ${estado}`);
+  console.log(`Solicitud encontrada: ${solicitud.nombre} ${solicitud.apellido}`);
 
-  try {
-    // 1. Buscar la solicitud en la base de datos
-    const solicitud = await Solicitud.findById(solicitudId);
-    if (!solicitud) {
-      console.log('[Notify] La solicitud no existe');
-      return;
-    }
-    console.log(`Solicitud encontrada: ${solicitud.nombre} ${solicitud.apellido}`);
+  const certificacion = await Certificacion.findOne({ solicitudId: solicitud._id });
+  console.log('Certificación encontrada:', certificacion);
 
-    // 2. Buscar la certificación asociada a esta solicitud
-    const certificacion = await Certificacion.findOne({ solicitudId: solicitud._id });
-    console.log('Certificación encontrada:', certificacion);
+  let subject = 'Actualización de estado de la solicitud';
+  let message = '';
 
-    // 3. Preparar mensaje según el estado
-    let subject = 'Actualización de estado de la solicitud';
-    let message = '';
-
-    if (estado === 'aprobado') {
-      if (certificacion && certificacion.archivoCertificado) {
-        message = `¡Enhorabuena, ${solicitud.nombre} ${solicitud.apellido}! Su solicitud ha sido aprobada. Aqui tiene anexada la certificación, lo cual cuenta como un documento válido para su posterior uso. </br></br>Puede descargar su certificado aquí: <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;
-      } else {
-        message = `¡Enhorabuena, ${solicitud.nombre} ${solicitud.apellido}! Su solicitud ha sido aprobada. El archivo del certificado no está disponible.`;
-      }
+  if (estado === 'aprobado') {
+    if (certificacion && certificacion.archivoCertificado) {
+      message = `¡Enhorabuena, ${solicitud.nombre} ${solicitud.apellido}! Su solicitud ha sido aprobada. Puede descargar su certificado aquí: <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;
     } else {
-      switch (estado) {
-        case 'pendiente':
-          message = `Hola ${solicitud.nombre}, su solicitud ha sido recibida y está pendiente de revisión.`;
-          break;
-        case 'revisión':
-          message = `Hola ${solicitud.nombre}, su solicitud está actualmente en revisión.`;
-          break;
-        case 'verificado':
-          message = `Hola ${solicitud.nombre}, su solicitud ha sido verificada con éxito.`;
-          break;
-        case 'rechazado':
-        default:
-          message = `Hola ${solicitud.nombre}, su solicitud ha sido rechazada, </br> para saber los motivos visite nuestras oficinas o contacte vía teléfono: (809) 731 1100  | Fax: 809-731-1101 | Horario:De 8:00 a.m. a 4:00 p.m. de Lunes a Viernes.`;
-          break;
-      }
+      message = `¡Enhorabuena, ${solicitud.nombre} ${solicitud.apellido}! Su solicitud ha sido aprobada. El archivo del certificado no está disponible.`;
     }
-
-    // 4. Enviar correo
-    await sendEmailNotification(solicitud.email, subject, message);
-    console.log('[Notify] Notificación enviada correctamente');
-
-  } catch (error) {
-    console.error('[Notify] Error durante la notificación:', error);
+  } else {
+    // Otros estados
+    message = `Hola ${solicitud.nombre}, su solicitud está en estado: ${estado}.`;
   }
-};
 
-module.exports = { sendEmailNotification, notifyStatusChange };
+  await sendEmailNotification(solicitud.email, subject, message);
+};
