@@ -51,7 +51,7 @@ const notifyStatusChange = async (email, estado, _id) => {
   if (estado === 'aprobado') {
     try {
       // Buscar el archivoCertificado en la colección Certificacion por solicitudId
-      const certificacion = await Certificacion.findOne({ solicitudId: _id });
+      const certificacion = await Certificacion.findOne({ solicitudId:solicitud._id });
 
 
       // Verifica lo que devuelve la consulta
@@ -61,7 +61,8 @@ const notifyStatusChange = async (email, estado, _id) => {
       if (certificacion && certificacion.archivoCertificado) {
         message = `¡Enhorabuena! Su solicitud ha sido aprobada. Aqui tiene anexada la certificación, lo cual cuenta como un documento válido para su posterior uso. </br></br>Puede descargar su certificado aquí: <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;
       } else {
-        message = `¡Enhorabuena! Su solicitud ha sido aprobada. Aqui tiene anexada la certificación, lo cual cuenta como un documento válido para su posterior uso. </br></br>Puede descargar su certificado aquí: <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;      }
+        message = '¡Enhorabuena! Su solicitud ha sido aprobada. El archivo del certificado no está disponible.';
+      }
     } catch (error) {
       console.error('Error al obtener el certificado:', error);
       message = '¡Enhorabuena! Su solicitud ha sido aprobada. Hubo un error al obtener el archivo del certificado.';
