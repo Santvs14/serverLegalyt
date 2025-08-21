@@ -49,10 +49,12 @@ const notifyStatusChange = async (email, estado) => {
 
   try {
     // Buscar la certificación asociada al email
-    const certificacion = await Certificacion.findOne({ email: email });
+    const certificacion = await Certificacion.findOne({ solicitudId: solicitudId });
+    console.log(`Generando certificado para la solicitud 1: ${certificacion.solicitudId}`);
+
 
     if (certificacion) {
-      console.log(`Generando certificado para la solicitud: ${certificacion.solicitudId}`);
+      console.log(`Generando certificado para la solicitud 2: ${certificacion.solicitudId}`);
     } else {
       console.log('No se encontró certificación para este email');
     }
