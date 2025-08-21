@@ -2,7 +2,6 @@
 require('dotenv').config(); // Asegúrate de que esto esté al inicio del archivo
 console.log('API Key-SENDINBLUE:', process.env.SENDINBLUE_API_KEY); // Asegúrate de que la clave se imprime correctamente
 
-const mongoose = require('mongoose');
 
 const Certificacion = require('../models/certificacion'); // Asegúrate de tener el modelo correcto
 
@@ -44,24 +43,18 @@ const sendEmailNotification = async (email, subject, message) => {
 
 
 
-const notifyStatusChange = async (email, estado, solicitudId) => {
+const notifyStatusChange = async (email, estado, _id) => {
   let subject = 'Actualización de estado de la solicitud';
   let message = '';
 
   // Primero, obtenemos el archivoCertificado si el estado es 'aprobado'
-
   if (estado === 'aprobado') {
     try {
       // Buscar el archivoCertificado en la colección Certificacion por solicitudId
-      console.log("Tipo de solicitudId recibido:", typeof solicitudId);
-console.log("Valor de solicitudId recibido:", solicitudId);
-
-const certificacion = await Certificacion.findOne({
-  solicitudId: new mongoose.Types.ObjectId(solicitudId)
-});
+      const certificacion = await Certificacion.findOne({ _id });
 
       // Verifica lo que devuelve la consulta
-      console.log('Certificación encontrada por solicitud:', certificacion);
+      console.log('Certificación encontrada:', certificacion);
 
       // Si existe un archivoCertificado, lo incluimos en el mensaje
       if (certificacion && certificacion.archivoCertificado) {
