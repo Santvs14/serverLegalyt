@@ -87,3 +87,6 @@ const notifyStatusChange = async (solicitudId, email, estado) => {
       console.error('Error al obtener la certificación o enviar el correo:', error);
   }
 };
+
+
+module.exports = { sendEmailNotification,notifyStatusChange };
