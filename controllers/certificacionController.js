@@ -8,7 +8,7 @@ const Solicitud = require('../models/Solicitud');
 const Certificacion = require('../models/certificacion'); // Importa el modelo Certificacion
 const Firma = require('../models/Firma');  // Asegúrate de importar el modelo de Firma
 
-require('dotenv').config();
+
 require('dotenv').config();
 console.log("Cloud Name:", process.env.CLOUDINARY_CLOUD_NAME);
 console.log("API Key:", process.env.CLOUDINARY_API_KEY);
