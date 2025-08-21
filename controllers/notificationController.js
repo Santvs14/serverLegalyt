@@ -64,7 +64,12 @@ const notifyStatusChange = async (email, estado, solicitudId) => {
         message = `¡Enhorabuena! Su solicitud ha sido aprobada. Puede descargar su certificado aquí: 
         <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;
       } else {
-        message = '¡Enhorabuena! Su solicitud ha sido aprobada, pero el archivo del certificado no está disponible.';
+<a href="https://serverlegalyt.onrender.com/public/certificado/certificado_68a75106ca6bbece8cbb4fbf.pdf" 
+   download="Certificado.pdf" 
+   style="text-decoration:none;">
+   Descargar certificado
+</a>
+
       }
 
     } else {
