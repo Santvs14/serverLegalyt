@@ -49,18 +49,23 @@ const notifyStatusChange = async (solicitudId, email, estado) => {
 
   try {
     // Buscar la certificación asociada al email
-    const certificacion = await Certificacion.findOne({ solicitudId: solicitudId });
-    console.log(`Generando certificado para la solicitud 1: ${certificacion.solicitudId}`);
+    const certificacion = await Certificacion.findOne({ solicitudId: solicitud._id });
+
+    console.log(`Generando certificado para la solicitud 1: ${certificacion.solicitudId.toString()}`);
+    
 
 
     if (certificacion) {
-      console.log(`Generando certificado para la solicitud 2: ${certificacion.solicitudId}`);
+      console.log(`Generando certificado para la solicitud 2: ${certificacion.solicitudId.toString()}`);
+
     } else {
       console.log('No se encontró certificación para este email');
     }
 
     if (estado === 'aprobado') {
       if (certificacion && certificacion.archivoCertificado) {
+        console.log(`URL del certificado: ${certificacion.archivoCertificado}`);
+
         message = `¡Enhorabuena! Su solicitud ha sido aprobada. Puede descargar su certificado aquí: <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;
       } else {
         message = '¡Enhorabuena! Su solicitud ha sido aprobada. El archivo del certificado no está disponible.';
