@@ -1,17 +1,18 @@
+
 require('dotenv').config(); // Asegúrate de que esto esté al inicio del archivo
-console.log('API Key-SENDINBLUE:', process.env.SENDINBLUE_API_KEY);
+console.log('API Key-SENDINBLUE:', process.env.SENDINBLUE_API_KEY); // Asegúrate de que la clave se imprime correctamente
 
-const Firma = require('../models/Firma'); 
-const Solicitud = require('../models/Solicitud');
-const Certificacion = require('../models/certificacion');
 
-// acceder a la autenticación
+const Certificacion = require('../models/certificacion'); // Asegúrate de tener el modelo correcto
+
+//acceder a la autenticación
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 const defaultClient = SibApiV3Sdk.ApiClient.instance;
 
-// API KEY Sendinblue
+// Asegúrate de que el nombre de la autenticación sea correcto
 const apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = process.env.SENDINBLUE_API_KEY;
+apiKey.apiKey = process.env.SENDINBLUE_API_KEY; // Asegúrate de tener tu clave de API en tus variables de entorno
+
 
 const sendEmailNotification = async (email, subject, message) => {
   const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
@@ -20,7 +21,11 @@ const sendEmailNotification = async (email, subject, message) => {
     to: [{ email: email }],
     sender: { email: 'santiagovs1402@gmail.com', name: 'Mescyt' },
     subject: subject,
-    htmlContent: `<html><body><p>${message}</p></body></html>`,
+    htmlContent: `<html>
+    <body><p>${message} </p>
+
+
+    </body></html>`,
   };
 
   try {
@@ -31,64 +36,59 @@ const sendEmailNotification = async (email, subject, message) => {
   }
 };
 
-/**
- * Notifica el cambio de estado de una solicitud, partiendo del ID de la Firma.
- * @param {String} firmaId - ID de la Firma en MongoDB
- * @param {String} estado - Estado nuevo de la solicitud
- */
-const notifyStatusChange = async (firmaId, estado) => {
+
+
+
+
+
+
+
+const notifyStatusChange = async (email, estado, _id) => {
   let subject = 'Actualización de estado de la solicitud';
   let message = '';
 
-  try {
-    // 1. Buscar la firma y popular la solicitud
-    const firma = await Firma.findById(firmaId).populate('solicitud');
-    if (!firma) {
-      console.log('No se encontró la firma con ese ID');
-      return;
-    }
+  // Primero, obtenemos el archivoCertificado si el estado es 'aprobado'
+  if (estado === 'aprobado') {
+    try {
+      // Buscar el archivoCertificado en la colección Certificacion por solicitudId
+      const certificacion = await Certificacion.findOne({ _id: '672dd8a8d4b12ac0e46ea4ec' });
 
-    const solicitud = firma.solicituds;
-    if (!solicitud) {
-      console.log('No se encontró la solicitud vinculada a esta firma');
-      return;
-    }
+      // Verifica lo que devuelve la consulta
+      console.log('Certificación encontrada:', certificacion);
 
-    console.log(`Solicitud encontrada: ${solicitud.nombre} ${solicitud.apellido} ${solicitud._id}`);
-
-    // 2. Buscar la certificación vinculada a la solicitud
-    const certificacion = await Certificacion.findOne({ solicitudId: solicitud._id }).lean();
-
-    if (estado === 'aprobado') {
+      // Si existe un archivoCertificado, lo incluimos en el mensaje
       if (certificacion && certificacion.archivoCertificado) {
-        message = `¡Enhorabuena! Su solicitud ha sido aprobada. Aquí tiene anexada la certificación, lo cual cuenta como un documento válido para su posterior uso.</br></br>
-        Puede descargar su certificado aquí: <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;
+        message = `¡Enhorabuena! Su solicitud ha sido aprobada. Aqui tiene anexada la certificación, lo cual cuenta como un documento válido para su posterior uso. </br></br>Puede descargar su certificado aquí: <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;
       } else {
         message = '¡Enhorabuena! Su solicitud ha sido aprobada. El archivo del certificado no está disponible.';
       }
-    } else {
-      switch (estado) {
-        case 'pendiente':
-          message = 'Su solicitud ha sido recibida y está pendiente de revisión.';
-          break;
-        case 'revisión':
-          message = 'Su solicitud está actualmente en revisión.';
-          break;
-        case 'verificado':
-          message = 'Su solicitud ha sido verificada con éxito.';
-          break;
-        case 'rechazado':
-        default:
-          message = 'Su solicitud ha sido rechazada.</br> Para saber los motivos visite nuestras oficinas o contacte vía teléfono: (809) 731 1100  | Fax: 809-731-1101 | Horario: De 8:00 a.m. a 4:00 p.m. de Lunes a Viernes.';
-          break;
-      }
+    } catch (error) {
+      console.error('Error al obtener el certificado:', error);
+      message = '¡Enhorabuena! Su solicitud ha sido aprobada. Hubo un error al obtener el archivo del certificado.';
     }
-
-    // 3. Enviar la notificación al correo de la solicitud
-    await sendEmailNotification(solicitud.email, subject, message);
-  } catch (error) {
-    console.error('Error en notifyStatusChange:', error);
+  } else {
+    switch (estado) {
+      case 'pendiente':
+        message = 'Su solicitud ha sido recibida y está pendiente de revisión.';
+        break;
+      case 'revisión':
+        message = 'Su solicitud está actualmente en revisión.';
+        break;
+      case 'verificado':
+        message = 'Su solicitud ha sido verificada con éxito.';
+        break;
+      case 'rechazado':
+        message = 'Su solicitud ha sido rechazada, </br> para saber los motivos visite nuestras oficinas o contacte vía teléfono: (809) 731 1100  | Fax: 809-731-1101 | Horario:De 8:00 a.m. a 4:00 p.m. de Lunes a Viernes.';
+        break;
+      default:
+        message = 'Su solicitud ha sido rechazada, </br> para saber los motivos visite nuestras oficinas o contacte vía teléfono: (809) 731 1100  | Fax: 809-731-1101 | Horario:De 8:00 a.m. a 4:00 p.m. de Lunes a Viernes.';
+    }
   }
+
+  // Enviar la notificación por correo
+  await sendEmailNotification(email, subject, message);
 };
 
-module.exports = { sendEmailNotification, notifyStatusChange };
+
+
+module.exports = { sendEmailNotification,notifyStatusChange };
