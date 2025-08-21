@@ -44,17 +44,20 @@ const sendEmailNotification = async (email, subject, message) => {
 
 
 
-const notifyStatusChange = async (email, estado, _id) => {
+const notifyStatusChange = async (email, estado, solicitudId) => {
   let subject = 'Actualización de estado de la solicitud';
   let message = '';
 
   // Primero, obtenemos el archivoCertificado si el estado es 'aprobado'
+  console.log("Valor recibido como _id en notifyStatusChange:", solicitudId);
+
   if (estado === 'aprobado') {
     try {
       // Buscar el archivoCertificado en la colección Certificacion por solicitudId
-      const certificacion = await Certificacion.findOne({ 
-        solicitudId: new mongoose.Types.ObjectId(_id) 
+      const certificacion = await Certificacion.findOne({
+        solicitudId: new mongoose.Types.ObjectId(solicitudId) 
       });
+      
 
       // Verifica lo que devuelve la consulta
       console.log('Certificación encontrada por solicitud:', certificacion);
