@@ -2,6 +2,8 @@
  require('dotenv').config();
 console.log('API Key-SENDINBLUE:', process.env.SENDINBLUE_API_KEY); // Asegúrate de que la clave se imprime correctamente
 
+const mongoose = require('mongoose');
+const ObjectId = mongoose.Types.ObjectId;
 
 const Certificacion = require('../models/certificacion'); // Asegúrate de tener el modelo correcto
 const Solicitud = require('../models/Solicitud');
@@ -51,8 +53,9 @@ const notifyStatusChange = async (email, estado, solicitudId) => {
   try {
     if (estado === 'aprobado') {
       // Buscar la certificación asociada a la solicitud
-      const certificacion = await Certificacion.findOne({ solicitudId });
-      console.log('Certificación encontrada:', certificacion);
+      const certificacion = await Certificacion.findOne({ solicitudId: ObjectId(solicitudId) });
+
+      console.log('Certificación encontrada para enviar por correo:', certificacion);
 
       if (certificacion && certificacion.archivoCertificado) {
         // URL completa del certificado
