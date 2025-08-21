@@ -51,7 +51,7 @@ const notifyStatusChange = async (email, estado, _id) => {
   if (estado === 'aprobado') {
     try {
       // Buscar el archivoCertificado en la colección Certificacion por solicitudId
-      const certificacion = await Certificacion.findOne({ _id });
+      const certificacion = await Certificacion.findOne({ _id }).lean();
 
       // Verifica lo que devuelve la consulta
       console.log('Certificación encontrada:', certificacion);
