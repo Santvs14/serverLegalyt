@@ -25,7 +25,7 @@ const certificacionSchema = new mongoose.Schema({
         required: true }
 });
 
-const Certificacion = mongoose.model('certificacions', certificacionSchema);
+const Certificacion = mongoose.model('Certificacion', certificacionSchema);
 
 module.exports = Certificacion;
 

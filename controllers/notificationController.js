@@ -3,7 +3,7 @@ require('dotenv').config(); // Asegúrate de que esto esté al inicio del archiv
 console.log('API Key-SENDINBLUE:', process.env.SENDINBLUE_API_KEY); // Asegúrate de que la clave se imprime correctamente
 
 
-const certificacions = require('../models/certificacion'); // Asegúrate de tener el modelo correcto
+const Certificacion = require('../models/certificacion'); // Asegúrate de tener el modelo correcto
 
 //acceder a la autenticación
 const SibApiV3Sdk = require('sib-api-v3-sdk');
@@ -47,12 +47,16 @@ const notifyStatusChange = async (email, estado,solicitudId ) => {
   let subject = 'Actualización de estado de la solicitud';
   let message = '';
   console.log('Certificación encontrada antes:', solicitudId)
+  const solicitudId = req.params.id; // Captura el ID de la solicitud desde los parámetros
+
+  console.log(`Id de la solicitud: ${solicitudId}`); // Verifica el ID
 
   // Primero, obtenemos el archivoCertificado si el estado es 'aprobado'
   if (estado === 'aprobado') {
     try {
       // Buscar el archivoCertificado en la colección Certificacion por solicitudId
-      const certificacion = await certificacions.findOne({ solicitudId });
+    //  const certificacion = await certificacions.findOne({ solicitudId });
+              const certificacion = await Certificacion.findById(solicitudId);
 
       // Verifica lo que devuelve la consulta
       console.log('Certificación encontrada:', certificacion);
