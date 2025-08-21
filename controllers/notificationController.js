@@ -1,12 +1,8 @@
 
 require('dotenv').config(); // Asegúrate de que esto esté al inicio del archivo
 console.log('API Key-SENDINBLUE:', process.env.SENDINBLUE_API_KEY); // Asegúrate de que la clave se imprime correctamente
-const mongoose = require('mongoose');
+
 const Solicitud = require('../models/Solicitud'); 
-const Firma = require('../models/Firma');  
-const Certificacion = require('../models/certificacion'); 
-
-
 const Certificacion = require('../models/certificacion'); // Asegúrate de tener el modelo correcto
 
 //acceder a la autenticación
