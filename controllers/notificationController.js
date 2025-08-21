@@ -46,13 +46,15 @@ const sendEmailNotification = async (email, subject, message) => {
 const notifyStatusChange = async (solicitudId, email, estado) => {
   let subject = 'Actualización de estado de la solicitud';
   let message = '';
+  
 
   try {
       // Buscar la certificación usando el ID de la solicitud
-      const certificacion = await Certificacion.findOne({ solicitudId });
+      const certificacion = await Certificacion.findOne(solicitudId);
+
 
       if (certificacion) {
-          console.log(`Generando certificado para la solicitud: ${certificacion.solicitudId}`);
+          console.log(`Generando certificado para la solicitud: ${certificacion._id}`);
           console.log(`URL del certificado: ${certificacion.archivoCertificado}`);
       } else {
           console.log('No se encontró certificación para esta solicitud');
