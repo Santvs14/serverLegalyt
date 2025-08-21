@@ -3,6 +3,7 @@ require('dotenv').config(); // Asegúrate de que esto esté al inicio del archiv
 console.log('API Key-SENDINBLUE:', process.env.SENDINBLUE_API_KEY); // Asegúrate de que la clave se imprime correctamente
 
 
+const Solicitud = require('../models/Solicitud'); // ✅ Import correcto
 
 const Certificacion = require('../models/certificacion'); // Asegúrate de tener el modelo correcto
 
@@ -45,28 +46,29 @@ const sendEmailNotification = async (email, subject, message) => {
 
 /**
  * Función para notificar el cambio de estado de una solicitud
+ * @param {string} solicitudId - ID de la solicitud en MongoDB
+ * @param {string} estado - Estado de la solicitud ('aprobado', 'pendiente', etc.)
  */
 const notifyStatusChange = async (solicitudId, estado) => {
   console.log(`[Notify] Iniciando notificación para solicitudId: ${solicitudId}, estado: ${estado}`);
 
   try {
-    // 1️⃣ Buscar la solicitud
+    // 1️⃣ Buscar la solicitud por ID
     const solicitud = await Solicitud.findById(solicitudId);
     if (!solicitud) {
-      console.log('[Notify] Solicitud no encontrada');
+      console.error('[Notify] Solicitud no encontrada');
       return;
     }
-    console.log(`[Notify] Solicitud encontrada: ${solicitud.nombre} ${solicitud.apellido}`);
+    console.log(`[Notify] Solicitud encontrada: ${solicitud.nombre} ${solicitud.apellido}, email: ${solicitud.email}`);
 
-    // 2️⃣ Inicializar mensaje
     let message = '';
     let certificadoInfo = null;
 
-    // 3️⃣ Si es aprobado, buscar certificación
+    // 2️⃣ Si el estado es aprobado, buscar certificación
     if (estado === 'aprobado') {
       certificadoInfo = await Certificacion.findOne({ solicitudId });
       if (certificadoInfo) {
-        console.log('[Notify] Certificación encontrada:', certificadoInfo._id);
+        console.log(`[Notify] Certificación encontrada: ${certificadoInfo._id}`);
         if (certificadoInfo.archivoCertificado) {
           message = `¡Enhorabuena! Su solicitud ha sido aprobada.<br>
           Puede descargar su certificado aquí: <a href="${certificadoInfo.archivoCertificado}" target="_blank">Descargar certificado</a>`;
@@ -95,9 +97,9 @@ const notifyStatusChange = async (solicitudId, estado) => {
       }
     }
 
-    // 4️⃣ Enviar correo
+    // 3️⃣ Enviar correo
     const result = await sendEmailNotification(solicitud.email, 'Actualización de estado de la solicitud', message);
-    console.log('[Notify] Resultado del envío:', result);
+    console.log(`[Notify] Resultado del envío: ${result}`);
 
   } catch (error) {
     console.error('[Notify] Error durante la notificación:', error);
