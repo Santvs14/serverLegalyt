@@ -4,7 +4,7 @@ console.log('API Key-SENDINBLUE:', process.env.SENDINBLUE_API_KEY); // Asegúrat
 
 
 const Certificacion = require('../models/certificacion'); // Asegúrate de tener el modelo correcto
-const Solicitud = require('../models/Solicitud');
+
 //acceder a la autenticación
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 const defaultClient = SibApiV3Sdk.ApiClient.instance;
@@ -43,61 +43,47 @@ const sendEmailNotification = async (email, subject, message) => {
 
 
 
-const notifyStatusChange = async ( email, estado) => {
+const notifyStatusChange = async (solicitudId, email, estado) => {
   let subject = 'Actualización de estado de la solicitud';
   let message = '';
 
   try {
-        // Buscar la solicitud por email
-        const solicitud = await Solicitud.findOne({ email: email });
+      // Buscar la certificación usando el ID de la solicitud
+      const certificacion = await Certificacion.findOne({ solicitudId });
 
-
-    if (!solicitud) {
-      console.log('No se encontró la solicitud con ese ID');
-      return;
-    }
-
-    // 2. Buscar la certificación asociada a esta solicitud
-    const certificacion = await Certificacion.findOne({ solicitud: solicitud._id });    
-
-
-    if (certificacion) {
-      console.log(`Generando certificado para la solicitud 2: ${certificacion.solicitud.toString()}`);
-
-    } else {
-      console.log('No se encontró certificación para este email');
-    }
-
-    if (estado === 'aprobado') {
-      if (certificacion && certificacion.archivoCertificado) {
-        console.log(`URL del certificado: ${certificacion.archivoCertificado}`);
-
-        message = `¡Enhorabuena! Su solicitud ha sido aprobada. Puede descargar su certificado aquí: <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;
+      if (certificacion) {
+          console.log(`Generando certificado para la solicitud: ${certificacion.solicitudId}`);
+          console.log(`URL del certificado: ${certificacion.archivoCertificado}`);
       } else {
-        message = '¡Enhorabuena! Su solicitud ha sido aprobada. El archivo del certificado no está disponible.';
+          console.log('No se encontró certificación para esta solicitud');
       }
-    } else {
-      switch (estado) {
-        case 'pendiente':
-          message = 'Su solicitud ha sido recibida y está pendiente de revisión.';
-          break;
-        case 'revisión':
-          message = 'Su solicitud está actualmente en revisión.';
-          break;
-        case 'verificado':
-          message = 'Su solicitud ha sido verificada con éxito.';
-          break;
-        case 'rechazado':
-        default:
-          message = 'Su solicitud ha sido rechazada, para más información contacte nuestras oficinas.';
-          break;
-      }
-    }
 
-    await sendEmailNotification(email, subject, message);
+      if (estado === 'aprobado') {
+          if (certificacion && certificacion.archivoCertificado) {
+              message = `¡Enhorabuena! Su solicitud ha sido aprobada. Puede descargar su certificado aquí: <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;
+          } else {
+              message = '¡Enhorabuena! Su solicitud ha sido aprobada. El archivo del certificado no está disponible.';
+          }
+      } else {
+          switch (estado) {
+              case 'pendiente':
+                  message = 'Su solicitud ha sido recibida y está pendiente de revisión.';
+                  break;
+              case 'revisión':
+                  message = 'Su solicitud está actualmente en revisión.';
+                  break;
+              case 'verificado':
+                  message = 'Su solicitud ha sido verificada con éxito.';
+                  break;
+              case 'rechazado':
+              default:
+                  message = 'Su solicitud ha sido rechazada, para más información contacte nuestras oficinas.';
+                  break;
+          }
+      }
+
+      await sendEmailNotification(email, subject, message);
   } catch (error) {
-    console.error('Error al obtener la certificación o enviar el correo:', error);
+      console.error('Error al obtener la certificación o enviar el correo:', error);
   }
 };
-
-module.exports = { sendEmailNotification, notifyStatusChange };
