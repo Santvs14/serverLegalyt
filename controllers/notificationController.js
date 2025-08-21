@@ -1,8 +1,8 @@
 require('dotenv').config();
 console.log('API Key-SENDINBLUE:', process.env.SENDINBLUE_API_KEY);
 
-const Solicitud = require('../models/Solicitud'); 
-const Firma = require('../models/Firma');  
+const Solicitud = require('../models/Solicitud');
+const Firma = require('../models/Firma');
 const Certificacion = require('../models/certificacion');
 
 const SibApiV3Sdk = require('sib-api-v3-sdk');
@@ -11,11 +11,10 @@ const apiKey = defaultClient.authentications['api-key'];
 apiKey.apiKey = process.env.SENDINBLUE_API_KEY;
 
 /**
- * Función para enviar correo
+ * Enviar correo
  */
 const sendEmailNotification = async (email, subject, message) => {
   const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-
   const sendSmtpEmail = {
     to: [{ email }],
     sender: { email: 'santiagovs1402@gmail.com', name: 'Mescyt' },
@@ -33,44 +32,46 @@ const sendEmailNotification = async (email, subject, message) => {
 };
 
 /**
- * Función para notificar cambios de estado de la solicitud
+ * Notificación de cambio de estado
+ * @param {String} identifier Puede ser email o ObjectId de solicitud
+ * @param {String} estado Estado de la solicitud
  */
-const notifyStatusChange = async (solicitudId, estado) => {
-  console.log(`[Notify] Iniciando notificación para solicitudId: ${solicitudId}, estado: ${estado}`);
-
-  let subject = 'Actualización de estado de la solicitud';
-  let message = '';
+const notifyStatusChange = async (identifier, estado) => {
+  console.log(`[Notify] Iniciando notificación para identifier: ${identifier}, estado: ${estado}`);
 
   try {
-    // 1️⃣ Buscar la solicitud en la base de datos
-    const solicitud = await Solicitud.findById(solicitudId);
+    // Detectar si el identifier es ObjectId o email
+    let solicitud;
+    if (mongoose.Types.ObjectId.isValid(identifier)) {
+      solicitud = await Solicitud.findById(identifier);
+    } else {
+      solicitud = await Solicitud.findOne({ email: identifier });
+    }
+
     if (!solicitud) {
-      console.log('[Notify] La solicitud no existe');
+      console.log('[Notify] La solicitud no existe para este identificador');
       return;
     }
-    console.log(`[Notify] Solicitud encontrada: ${solicitud.nombre} ${solicitud.apellido}, email: ${solicitud.email}`);
 
-    // 2️⃣ Buscar la firma asociada a la solicitud
-    const firma = await Firma.findOne({ solicituds: solicitudId }).populate('admins');
-    if (!firma) {
-      console.log('[Notify] La firma no existe para esta solicitud');
-    } else {
-      console.log('[Notify] Firma encontrada:', firma._id);
-    }
+    console.log(`[Notify] Solicitud encontrada: ${solicitud.nombre} ${solicitud.apellido}, id: ${solicitud._id}, email: ${solicitud.email}`);
 
-    // 3️⃣ Obtener certificación si el estado es 'aprobado'
+    // Buscar la firma
+    const firma = await Firma.findOne({ solicituds: solicitud._id }).populate('admins');
+    console.log('[Notify] Firma encontrada:', firma?._id || 'No existe');
+
+    // Buscar certificación si estado es 'aprobado'
+    let message = '';
     if (estado === 'aprobado') {
-      const certificacion = await Certificacion.findOne({ solicitudId });
-      console.log('[Notify] Certificación encontrada:', certificacion?._id || 'No disponible');
+      const certificacion = await Certificacion.findOne({ solicitudId: solicitud._id });
+      console.log('[Notify] Certificación encontrada:', certificacion?._id || 'No existe');
 
       if (certificacion && certificacion.archivoCertificado) {
-        message = `¡Enhorabuena! Su solicitud ha sido aprobada. Aquí tiene anexada la certificación, lo cual cuenta como un documento válido para su posterior uso.<br><br>
+        message = `¡Enhorabuena! Su solicitud ha sido aprobada.<br>
         Puede descargar su certificado aquí: <a href="${certificacion.archivoCertificado}" target="_blank">Descargar certificado</a>`;
       } else {
         message = '¡Enhorabuena! Su solicitud ha sido aprobada. El archivo del certificado no está disponible.';
       }
     } else {
-      // Mensajes estándar para otros estados
       switch (estado) {
         case 'pendiente':
           message = 'Su solicitud ha sido recibida y está pendiente de revisión.';
@@ -83,12 +84,12 @@ const notifyStatusChange = async (solicitudId, estado) => {
           break;
         case 'rechazado':
         default:
-          message = 'Su solicitud ha sido rechazada. Para más información visite nuestras oficinas o contacte vía teléfono: (809) 731 1100 | Fax: 809-731-1101 | Horario: 8:00 a.m. - 4:00 p.m. de lunes a viernes.';
+          message = 'Su solicitud ha sido rechazada. Para más información contacte nuestras oficinas o vía teléfono.';
       }
     }
 
-    // 4️⃣ Enviar correo al email de la solicitud
-    await sendEmailNotification(solicitud.email, subject, message);
+    // Enviar correo
+    await sendEmailNotification(solicitud.email, 'Actualización de estado de la solicitud', message);
     console.log('[Notify] Proceso de notificación finalizado');
 
   } catch (error) {
