@@ -1,5 +1,5 @@
 
-const streamifier = require('streamifier');  // Asegúrate de importar 'streamifier'
+const streamifier = require('streamifier');  // Para el doc pdf
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
 const path = require('path');
